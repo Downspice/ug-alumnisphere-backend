@@ -1,4 +1,4 @@
-import express, { Application, Request, Response, NextFunction } from "express";
+import express, { Application, Request, Response } from "express";
 import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -33,7 +33,7 @@ app.use(express.json());
 // Root welcome & status endpoint
 app.get("/", (_req: Request, res: Response) => {
   const isDbConnected = mongoose.connection.readyState === 1;
-  res.json({
+  res.status(200).json({
     status: "OK",
     service: "UG AlumniSphere Express & Apollo GraphQL API",
     version: "1.0.0",
@@ -73,45 +73,34 @@ const apolloServer = new ApolloServer<MyContext>({
   introspection: true,
 });
 
-let apolloStartedPromise: Promise<void> | null = null;
+let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
-async function ensureServerReady() {
-  await connectDB();
-  if (!apolloStartedPromise) {
-    apolloStartedPromise = apolloServer.start();
+export async function initServer(): Promise<void> {
+  if (isInitialized) return;
+  if (!initPromise) {
+    initPromise = (async () => {
+      await connectDB();
+      await apolloServer.start();
+      // Mount GraphQL expressMiddleware after start() completes
+      app.use(
+        "/graphql",
+        expressMiddleware(apolloServer, {
+          context: async ({ req }: { req: Request }) => ({
+            token: req.headers.authorization,
+          }),
+        })
+      );
+      isInitialized = true;
+    })();
   }
-  await apolloStartedPromise;
+  return initPromise;
 }
 
-// Middleware to ensure DB and Apollo are initialized before handling requests
-const initMiddleware = async (
-  _req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  try {
-    await ensureServerReady();
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-
-app.use("/graphql", initMiddleware);
-
-app.use(
-  "/graphql",
-  expressMiddleware(apolloServer, {
-    context: async ({ req }: { req: Request }) => ({
-      token: req.headers.authorization,
-    }),
-  })
-);
-
-// Only listen directly when running locally or not in a serverless environment
+// Only listen directly when running locally outside of serverless
 if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   const httpServer = http.createServer(app);
-  ensureServerReady().then(() => {
+  initServer().then(() => {
     httpServer.listen(PORT, () => {
       console.log(`🚀 Express Server ready at http://localhost:${PORT}`);
       console.log(`📡 GraphQL API ready at http://localhost:${PORT}/graphql`);
