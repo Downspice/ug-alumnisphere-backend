@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { ApolloServer } from "@apollo/server";
+import { GraphQLError } from "graphql";
 import { expressMiddleware } from "@as-integrations/express5";
 import { connectDB } from "./config/db.js";
 import { typeDefs } from "./schema/typeDefs.js";
@@ -66,11 +67,30 @@ app.get("/health", async (_req: Request, res: Response) => {
   });
 });
 
-// Setup Apollo Server instance
+// Setup Apollo Server instance with structured error formatting
 const apolloServer = new ApolloServer<MyContext>({
   typeDefs,
   resolvers,
   introspection: true,
+  formatError: (formattedError, error) => {
+    // Log unexpected errors on the server
+    console.error("[GraphQL Error]:", {
+      message: formattedError.message,
+      code: formattedError.extensions?.code,
+      path: formattedError.path,
+      originalError: error,
+    });
+
+    return {
+      message: formattedError.message,
+      locations: formattedError.locations,
+      path: formattedError.path,
+      extensions: {
+        code: formattedError.extensions?.code || "INTERNAL_SERVER_ERROR",
+        timestamp: new Date().toISOString(),
+      },
+    };
+  },
 });
 
 let isInitialized = false;
@@ -91,6 +111,30 @@ export async function initServer(): Promise<void> {
           }),
         })
       );
+
+      // Global Express 404 Handler
+      app.use((req: Request, res: Response) => {
+        res.status(404).json({
+          error: {
+            code: "NOT_FOUND",
+            message: `Route '${req.method} ${req.originalUrl}' not found.`,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      });
+
+      // Global Express 500 Error Handler
+      app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {
+        console.error("[Express Server Error]:", err);
+        res.status(500).json({
+          error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: err.message || "An unexpected internal server error occurred.",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      });
+
       isInitialized = true;
     })();
   }

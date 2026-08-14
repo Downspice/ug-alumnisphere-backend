@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { GraphQLError } from "graphql";
 import { Exam, IExam } from "../models/Exam.js";
 import { User, IUser } from "../models/User.js";
 
@@ -60,20 +61,38 @@ export const resolvers = {
     exams: async (_: unknown, { isPublished }: { isPublished?: boolean }) => {
       try {
         const filter = typeof isPublished === "boolean" ? { isPublished } : {};
-        const exams = await Exam.find(filter).sort({ createdAt: -1 });
-        return exams;
+        return await Exam.find(filter).sort({ createdAt: -1 });
       } catch (error) {
         console.error("Error fetching exams:", error);
-        return [];
+        throw new GraphQLError("Failed to fetch exams list from database.", {
+          extensions: {
+            code: "INTERNAL_SERVER_ERROR",
+            originalError: error instanceof Error ? error.message : String(error),
+          },
+        });
       }
     },
 
     exam: async (_: unknown, { id }: { id: string }) => {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new GraphQLError(`Invalid Exam ID format: '${id}'`, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
       try {
-        return await Exam.findById(id);
+        const exam = await Exam.findById(id);
+        if (!exam) {
+          throw new GraphQLError(`Exam not found with ID '${id}'`, {
+            extensions: { code: "NOT_FOUND" },
+          });
+        }
+        return exam;
       } catch (error) {
+        if (error instanceof GraphQLError) throw error;
         console.error(`Error fetching exam ${id}:`, error);
-        return null;
+        throw new GraphQLError(`Failed to fetch exam with ID '${id}'`, {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
       }
     },
 
@@ -82,41 +101,163 @@ export const resolvers = {
         return await User.find().sort({ createdAt: -1 });
       } catch (error) {
         console.error("Error fetching users:", error);
-        return [];
+        throw new GraphQLError("Failed to fetch users list from database.", {
+          extensions: {
+            code: "INTERNAL_SERVER_ERROR",
+            originalError: error instanceof Error ? error.message : String(error),
+          },
+        });
       }
     },
 
     user: async (_: unknown, { id }: { id: string }) => {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new GraphQLError(`Invalid User ID format: '${id}'`, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
       try {
-        return await User.findById(id);
+        const user = await User.findById(id);
+        if (!user) {
+          throw new GraphQLError(`User not found with ID '${id}'`, {
+            extensions: { code: "NOT_FOUND" },
+          });
+        }
+        return user;
       } catch (error) {
+        if (error instanceof GraphQLError) throw error;
         console.error(`Error fetching user ${id}:`, error);
-        return null;
+        throw new GraphQLError(`Failed to fetch user with ID '${id}'`, {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
       }
     },
   },
 
   Mutation: {
     createExam: async (_: unknown, { input }: { input: CreateExamInput }) => {
-      const exam = new Exam(input);
-      return await exam.save();
+      if (!input.title || input.title.trim().length === 0) {
+        throw new GraphQLError("Exam title is required and cannot be empty.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      if (input.durationMinutes <= 0) {
+        throw new GraphQLError("Exam duration must be greater than 0 minutes.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      if (input.passingMarks > input.totalMarks) {
+        throw new GraphQLError("Passing marks cannot exceed total marks.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      try {
+        const exam = new Exam(input);
+        return await exam.save();
+      } catch (error) {
+        console.error("Error creating exam:", error);
+        throw new GraphQLError("Failed to create exam record.", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            details: error instanceof Error ? error.message : String(error),
+          },
+        });
+      }
     },
 
     updateExam: async (
       _: unknown,
       { id, input }: { id: string; input: UpdateExamInput }
     ) => {
-      return await Exam.findByIdAndUpdate(id, { $set: input }, { new: true });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new GraphQLError(`Invalid Exam ID format: '${id}'`, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      try {
+        const updated = await Exam.findByIdAndUpdate(
+          id,
+          { $set: input },
+          { new: true, runValidators: true }
+        );
+        if (!updated) {
+          throw new GraphQLError(`Exam with ID '${id}' not found.`, {
+            extensions: { code: "NOT_FOUND" },
+          });
+        }
+        return updated;
+      } catch (error) {
+        if (error instanceof GraphQLError) throw error;
+        console.error(`Error updating exam ${id}:`, error);
+        throw new GraphQLError("Failed to update exam.", {
+          extensions: {
+            code: "INTERNAL_SERVER_ERROR",
+            details: error instanceof Error ? error.message : String(error),
+          },
+        });
+      }
     },
 
     deleteExam: async (_: unknown, { id }: { id: string }) => {
-      const result = await Exam.findByIdAndDelete(id);
-      return !!result;
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new GraphQLError(`Invalid Exam ID format: '${id}'`, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      try {
+        const result = await Exam.findByIdAndDelete(id);
+        if (!result) {
+          throw new GraphQLError(`Exam with ID '${id}' not found to delete.`, {
+            extensions: { code: "NOT_FOUND" },
+          });
+        }
+        return true;
+      } catch (error) {
+        if (error instanceof GraphQLError) throw error;
+        console.error(`Error deleting exam ${id}:`, error);
+        throw new GraphQLError("Failed to delete exam record.", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
     },
 
     createUser: async (_: unknown, { input }: { input: CreateUserInput }) => {
-      const user = new User(input);
-      return await user.save();
+      if (!input.name || input.name.trim().length === 0) {
+        throw new GraphQLError("User name is required.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      if (!input.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) {
+        throw new GraphQLError("A valid email address is required.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      try {
+        const existing = await User.findOne({ email: input.email.toLowerCase() });
+        if (existing) {
+          throw new GraphQLError(`User with email '${input.email}' already exists.`, {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        const user = new User({
+          ...input,
+          email: input.email.toLowerCase(),
+        });
+        return await user.save();
+      } catch (error) {
+        if (error instanceof GraphQLError) throw error;
+        console.error("Error creating user:", error);
+        throw new GraphQLError("Failed to create user record.", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            details: error instanceof Error ? error.message : String(error),
+          },
+        });
+      }
     },
   },
 
