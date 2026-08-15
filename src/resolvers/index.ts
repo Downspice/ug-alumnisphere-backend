@@ -13,6 +13,7 @@ import { mentorshipResolvers } from "./mentorship.js";
 import { eventResolvers } from "./events.js";
 import { campaignResolvers } from "./campaigns.js";
 import { notificationResolvers } from "./notifications.js";
+import { adminResolvers } from "./admin.js";
 
 export const resolvers = {
   Query: {
@@ -46,6 +47,7 @@ export const resolvers = {
     ...eventResolvers.Query,
     ...campaignResolvers.Query,
     ...notificationResolvers.Query,
+    ...adminResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
@@ -61,6 +63,7 @@ export const resolvers = {
     ...eventResolvers.Mutation,
     ...campaignResolvers.Mutation,
     ...notificationResolvers.Mutation,
+    ...adminResolvers.Mutation,
   },
   User: {
     ...userResolvers.User,
@@ -87,4 +90,5 @@ export const resolvers = {
   Campaign: campaignResolvers.Campaign,
   Contribution: campaignResolvers.Contribution,
   Notification: notificationResolvers.Notification,
+  ContentReport: adminResolvers.ContentReport,
 };
