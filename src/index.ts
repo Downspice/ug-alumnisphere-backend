@@ -11,6 +11,8 @@ import { typeDefs } from "./schema/typeDefs.js";
 import { resolvers } from "./resolvers/index.js";
 import { resolveUserFromToken } from "./utils/auth.js";
 import type { MyContext } from "./types/context.js";
+import { registerUploadRoutes } from "./routes/uploads.js";
+import { ensureStorageBuckets, isStorageConfigured } from "./utils/storage.js";
 
 dotenv.config();
 
@@ -56,6 +58,9 @@ app.get("/", (_req: Request, res: Response) => {
     endpoints: {
       health: "/health",
       graphql: "/graphql",
+      uploads: "/uploads",
+      files: "/files/:id",
+      storageStatus: "/storage/status",
     },
     timestamp: new Date().toISOString(),
   });
@@ -115,6 +120,14 @@ export async function initServer(): Promise<void> {
   if (!initPromise) {
     initPromise = (async () => {
       await connectDB();
+      registerUploadRoutes(app);
+      if (isStorageConfigured()) {
+        await ensureStorageBuckets().catch((error) => {
+          console.warn("[storage] Bucket setup skipped:", error);
+        });
+      } else {
+        console.warn("[storage] Supabase is not configured. File uploads will fail until keys are set.");
+      }
       await apolloServer.start();
       // Mount GraphQL expressMiddleware after start() completes
       app.use(
