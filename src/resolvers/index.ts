@@ -5,6 +5,7 @@ import { examResolvers } from "./exams.js";
 import { verificationResolvers } from "./verification.js";
 import { directoryResolvers } from "./directory.js";
 import { connectionResolvers } from "./connections.js";
+import { messagingResolvers } from "./messaging.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -31,6 +32,7 @@ export const resolvers = {
     ...verificationResolvers.Query,
     ...directoryResolvers.Query,
     ...connectionResolvers.Query,
+    ...messagingResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -39,6 +41,7 @@ export const resolvers = {
     ...examResolvers.Mutation,
     ...verificationResolvers.Mutation,
     ...connectionResolvers.Mutation,
+    ...messagingResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -49,5 +52,7 @@ export const resolvers = {
   Exam: examResolvers.Exam,
   VerificationRequest: verificationResolvers.VerificationRequest,
   Connection: connectionResolvers.Connection,
+  Conversation: messagingResolvers.Conversation,
+  Message: messagingResolvers.Message,
   Notification: notificationResolvers.Notification,
 };
