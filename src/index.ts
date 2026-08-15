@@ -9,20 +9,34 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { connectDB } from "./config/db.js";
 import { typeDefs } from "./schema/typeDefs.js";
 import { resolvers } from "./resolvers/index.js";
+import { resolveUserFromToken } from "./utils/auth.js";
+import type { MyContext } from "./types/context.js";
 
 dotenv.config();
 
-export interface MyContext {
-  token?: string;
+export type { MyContext };
+
+function getAllowedOrigins(): string[] {
+  return (process.env.FRONTEND_ORIGINS || "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-// Enable CORS for all frontend origins & methods
+const allowedOrigins = getAllowedOrigins();
+
 app.use(
   cors({
-    origin: "*",
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Origin '${origin}' is not allowed by CORS.`));
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
     credentials: true,
@@ -106,9 +120,12 @@ export async function initServer(): Promise<void> {
       app.use(
         "/graphql",
         expressMiddleware(apolloServer, {
-          context: async ({ req }: { req: Request }) => ({
-            token: req.headers.authorization,
-          }),
+          context: async ({ req }: { req: Request }): Promise<MyContext> => {
+            const header = req.headers.authorization;
+            const token = Array.isArray(header) ? header[0] : header;
+            const user = await resolveUserFromToken(token);
+            return { token, user };
+          },
         })
       );
 
