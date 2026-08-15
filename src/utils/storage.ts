@@ -52,6 +52,24 @@ export const PURPOSE_RULES: Record<
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
   },
+  event: {
+    bucket: STORAGE_BUCKETS.eventMedia,
+    visibility: "public",
+    maxBytes: 5 * 1024 * 1024,
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
+  campaign: {
+    bucket: STORAGE_BUCKETS.campaignMedia,
+    visibility: "public",
+    maxBytes: 5 * 1024 * 1024,
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
+  community: {
+    bucket: STORAGE_BUCKETS.communityMedia,
+    visibility: "public",
+    maxBytes: 5 * 1024 * 1024,
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
 };
 
 const BUCKET_SPECS = [
@@ -70,7 +88,9 @@ const BUCKET_SPECS = [
 
 export function parsePurpose(value: string | undefined): FilePurpose {
   if (!value || !FILE_PURPOSES.includes(value as FilePurpose)) {
-    badUserInput("Upload purpose must be avatar, post, verification, or resume.");
+    badUserInput(
+      "Upload purpose must be avatar, post, verification, resume, event, campaign, or community."
+    );
   }
   return value as FilePurpose;
 }
@@ -218,6 +238,15 @@ export async function resolveDownloadUrl(file: IStoredFile) {
     internalError("Could not create a download link.", signed.error);
   }
   return signed.data.signedUrl;
+}
+
+export function coverFieldsFromFile(file: IStoredFile | null) {
+  if (!file) return {};
+  return {
+    coverImageUrl: file.publicUrl || `/files/${file._id.toString()}`,
+    coverImagePath: file.path,
+    coverFileId: file._id,
+  };
 }
 
 export function isPrivateBucket(bucket: string) {

@@ -15,6 +15,7 @@ import {
   internalError,
   notFound,
 } from "../utils/errors.js";
+import { claimStoredFile, coverFieldsFromFile } from "../utils/storage.js";
 
 async function membership(communityId: string, userId: string) {
   return CommunityMember.findOne({ communityId, userId });
@@ -122,7 +123,16 @@ export const communityResolvers = {
   Mutation: {
     createCommunity: async (
       _: unknown,
-      { input }: { input: { name: string; description?: string; isPrivate?: boolean } },
+      {
+        input,
+      }: {
+        input: {
+          name: string;
+          description?: string;
+          isPrivate?: boolean;
+          coverFileId?: string;
+        };
+      },
       context: MyContext
     ) => {
       const { user } = requireAuth(context);
@@ -133,6 +143,9 @@ export const communityResolvers = {
       if (!slug) badUserInput("Community name must include letters or numbers.");
       const clash = await Community.findOne({ slug });
       if (clash) slug = `${slug}-${Date.now().toString().slice(-4)}`;
+      const cover = input.coverFileId
+        ? await claimStoredFile(input.coverFileId, user._id.toString(), "community")
+        : null;
       try {
         const community = await Community.create({
           name,
@@ -141,6 +154,7 @@ export const communityResolvers = {
           isPrivate: Boolean(input.isPrivate),
           ownerId: user._id,
           memberCount: 1,
+          ...coverFieldsFromFile(cover),
         });
         await CommunityMember.create({
           communityId: community._id,
@@ -155,7 +169,13 @@ export const communityResolvers = {
 
     updateCommunity: async (
       _: unknown,
-      { id, input }: { id: string; input: { name?: string; description?: string } },
+      {
+        id,
+        input,
+      }: {
+        id: string;
+        input: { name?: string; description?: string; coverFileId?: string };
+      },
       context: MyContext
     ) => {
       const { user } = requireAuth(context);
@@ -169,6 +189,14 @@ export const communityResolvers = {
       if (input.name?.trim()) community.name = input.name.trim();
       if (input.description !== undefined)
         community.description = input.description.trim();
+      if (input.coverFileId) {
+        const cover = await claimStoredFile(
+          input.coverFileId,
+          user._id.toString(),
+          "community"
+        );
+        Object.assign(community, coverFieldsFromFile(cover));
+      }
       return community.save();
     },
 
@@ -304,6 +332,7 @@ export const communityResolvers = {
       return Boolean(request);
     },
     createdAt: (parent: ICommunity) => parent.createdAt.toISOString(),
+    coverImageUrl: (parent: ICommunity) => parent.coverImageUrl || null,
   },
 
   CommunityMember: {

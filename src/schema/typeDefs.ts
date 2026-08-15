@@ -247,6 +247,7 @@ export const typeDefs = `#graphql
     memberCount: Int!
     myRole: CommunityRole
     joinRequestPending: Boolean!
+    coverImageUrl: String
     createdAt: String!
   }
 
@@ -268,11 +269,13 @@ export const typeDefs = `#graphql
     name: String!
     description: String
     isPrivate: Boolean
+    coverFileId: ID
   }
 
   input UpdateCommunityInput {
     name: String
     description: String
+    coverFileId: ID
   }
 
   enum PostType {
@@ -444,6 +447,7 @@ export const typeDefs = `#graphql
     createdBy: User
     registeredCount: Int!
     registeredByMe: Boolean!
+    coverImageUrl: String
     createdAt: String!
   }
 
@@ -461,6 +465,7 @@ export const typeDefs = `#graphql
     startsAt: String!
     endsAt: String
     capacity: Int
+    coverFileId: ID
   }
 
   enum CampaignStatus {
@@ -481,6 +486,7 @@ export const typeDefs = `#graphql
     deadline: String
     status: CampaignStatus!
     createdBy: User
+    coverImageUrl: String
     createdAt: String!
   }
 
@@ -500,6 +506,7 @@ export const typeDefs = `#graphql
     description: String!
     goalAmount: Float!
     deadline: String
+    coverFileId: ID
   }
 
   input UpdateCampaignInput {
@@ -507,6 +514,7 @@ export const typeDefs = `#graphql
     description: String
     goalAmount: Float
     deadline: String
+    coverFileId: ID
   }
 
   type Notification {
@@ -563,6 +571,7 @@ export const typeDefs = `#graphql
     startsAt: String
     endsAt: String
     capacity: Int
+    coverFileId: ID
   }
 
   type Query {

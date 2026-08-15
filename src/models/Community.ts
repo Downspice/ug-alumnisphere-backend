@@ -7,6 +7,9 @@ export interface ICommunity extends Document {
   isPrivate: boolean;
   ownerId: Types.ObjectId;
   memberCount: number;
+  coverImageUrl?: string;
+  coverImagePath?: string;
+  coverFileId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +22,9 @@ const CommunitySchema = new Schema<ICommunity>(
     isPrivate: { type: Boolean, default: false, index: true },
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     memberCount: { type: Number, default: 1 },
+    coverImageUrl: { type: String, default: "" },
+    coverImagePath: { type: String, default: "" },
+    coverFileId: { type: Schema.Types.ObjectId, ref: "StoredFile" },
   },
   { timestamps: true }
 );

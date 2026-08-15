@@ -10,6 +10,9 @@ export interface ICampaign extends Document {
   deadline?: Date;
   status: CampaignStatus;
   createdById: Types.ObjectId;
+  coverImageUrl?: string;
+  coverImagePath?: string;
+  coverFileId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +25,9 @@ const CampaignSchema = new Schema<ICampaign>(
     deadline: { type: Date },
     status: { type: String, enum: CAMPAIGN_STATUSES, default: "draft", index: true },
     createdById: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    coverImageUrl: { type: String, default: "" },
+    coverImagePath: { type: String, default: "" },
+    coverFileId: { type: Schema.Types.ObjectId, ref: "StoredFile" },
   },
   { timestamps: true }
 );

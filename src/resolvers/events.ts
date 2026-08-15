@@ -11,6 +11,7 @@ import {
   internalError,
   notFound,
 } from "../utils/errors.js";
+import { claimStoredFile, coverFieldsFromFile } from "../utils/storage.js";
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -89,6 +90,7 @@ export const eventResolvers = {
           startsAt: string;
           endsAt?: string;
           capacity?: number;
+          coverFileId?: string;
         };
       },
       context: MyContext
@@ -105,6 +107,9 @@ export const eventResolvers = {
       if (input.capacity !== undefined && input.capacity !== null && input.capacity < 1) {
         badUserInput("Capacity must be at least 1.");
       }
+      const cover = input.coverFileId
+        ? await claimStoredFile(input.coverFileId, user._id.toString(), "event")
+        : null;
       try {
         return await Event.create({
           title: input.title.trim(),
@@ -115,6 +120,7 @@ export const eventResolvers = {
           capacity: input.capacity || undefined,
           status: "draft",
           createdById: user._id,
+          ...coverFieldsFromFile(cover),
         });
       } catch (error) {
         internalError("Failed to create event.", error);
@@ -135,11 +141,12 @@ export const eventResolvers = {
           startsAt?: string;
           endsAt?: string;
           capacity?: number;
+          coverFileId?: string;
         };
       },
       context: MyContext
     ) => {
-      requireAdmin(context);
+      const { user } = requireAdmin(context);
       assertValidObjectId(id, "Event ID", mongoose);
       const event = await Event.findById(id);
       if (!event) notFound("Event not found.");
@@ -151,6 +158,14 @@ export const eventResolvers = {
       if (input.startsAt) event.startsAt = parseDate(input.startsAt, "Start date");
       if (input.endsAt) event.endsAt = parseDate(input.endsAt, "End date");
       if (input.capacity !== undefined) event.capacity = input.capacity || undefined;
+      if (input.coverFileId) {
+        const cover = await claimStoredFile(
+          input.coverFileId,
+          user._id.toString(),
+          "event"
+        );
+        Object.assign(event, coverFieldsFromFile(cover));
+      }
       if (event.endsAt && event.endsAt.getTime() < event.startsAt.getTime()) {
         badUserInput("End date must be after the start date.");
       }
@@ -234,6 +249,7 @@ export const eventResolvers = {
     startsAt: (parent: IEvent) => parent.startsAt.toISOString(),
     endsAt: (parent: IEvent) => parent.endsAt?.toISOString() ?? null,
     createdAt: (parent: IEvent) => parent.createdAt.toISOString(),
+    coverImageUrl: (parent: IEvent) => parent.coverImageUrl || null,
   },
 
   EventRegistration: {

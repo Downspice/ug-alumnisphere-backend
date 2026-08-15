@@ -12,6 +12,9 @@ export interface IEvent extends Document {
   capacity?: number;
   status: EventStatus;
   createdById: Types.ObjectId;
+  coverImageUrl?: string;
+  coverImagePath?: string;
+  coverFileId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +29,9 @@ const EventSchema = new Schema<IEvent>(
     capacity: { type: Number, min: 1 },
     status: { type: String, enum: EVENT_STATUSES, default: "draft", index: true },
     createdById: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    coverImageUrl: { type: String, default: "" },
+    coverImagePath: { type: String, default: "" },
+    coverFileId: { type: Schema.Types.ObjectId, ref: "StoredFile" },
   },
   { timestamps: true }
 );

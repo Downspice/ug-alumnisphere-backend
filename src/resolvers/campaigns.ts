@@ -12,6 +12,7 @@ import {
   internalError,
   notFound,
 } from "../utils/errors.js";
+import { claimStoredFile, coverFieldsFromFile } from "../utils/storage.js";
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -112,6 +113,7 @@ export const campaignResolvers = {
           description: string;
           goalAmount: number;
           deadline?: string;
+          coverFileId?: string;
         };
       },
       context: MyContext
@@ -123,6 +125,9 @@ export const campaignResolvers = {
       if (!input.goalAmount || input.goalAmount < 1) {
         badUserInput("Goal amount must be at least 1.");
       }
+      const cover = input.coverFileId
+        ? await claimStoredFile(input.coverFileId, user._id.toString(), "campaign")
+        : null;
       try {
         return await Campaign.create({
           title: input.title.trim(),
@@ -131,6 +136,7 @@ export const campaignResolvers = {
           deadline: input.deadline ? new Date(input.deadline) : undefined,
           status: "draft",
           createdById: user._id,
+          ...coverFieldsFromFile(cover),
         });
       } catch (error) {
         internalError("Failed to create campaign.", error);
@@ -149,11 +155,12 @@ export const campaignResolvers = {
           description?: string;
           goalAmount?: number;
           deadline?: string;
+          coverFileId?: string;
         };
       },
       context: MyContext
     ) => {
-      requireAdmin(context);
+      const { user } = requireAdmin(context);
       assertValidObjectId(id, "Campaign ID", mongoose);
       const campaign = await Campaign.findById(id);
       if (!campaign) notFound("Campaign not found.");
@@ -166,6 +173,14 @@ export const campaignResolvers = {
         campaign.goalAmount = input.goalAmount;
       }
       if (input.deadline) campaign.deadline = new Date(input.deadline);
+      if (input.coverFileId) {
+        const cover = await claimStoredFile(
+          input.coverFileId,
+          user._id.toString(),
+          "campaign"
+        );
+        Object.assign(campaign, coverFieldsFromFile(cover));
+      }
       return campaign.save();
     },
 
@@ -250,6 +265,7 @@ export const campaignResolvers = {
     },
     deadline: (parent: ICampaign) => parent.deadline?.toISOString() ?? null,
     createdAt: (parent: ICampaign) => parent.createdAt.toISOString(),
+    coverImageUrl: (parent: ICampaign) => parent.coverImageUrl || null,
   },
 
   Contribution: {

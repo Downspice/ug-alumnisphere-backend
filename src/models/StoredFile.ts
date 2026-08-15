@@ -1,6 +1,14 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
-export const FILE_PURPOSES = ["avatar", "post", "verification", "resume"] as const;
+export const FILE_PURPOSES = [
+  "avatar",
+  "post",
+  "verification",
+  "resume",
+  "event",
+  "campaign",
+  "community",
+] as const;
 export type FilePurpose = (typeof FILE_PURPOSES)[number];
 
 export interface IStoredFile extends Document {
