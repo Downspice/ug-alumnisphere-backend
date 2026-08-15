@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { authResolvers } from "./auth.js";
 import { userResolvers } from "./users.js";
 import { examResolvers } from "./exams.js";
+import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
   Query: {
@@ -24,15 +25,18 @@ export const resolvers = {
     ...authResolvers.Query,
     ...userResolvers.Query,
     ...examResolvers.Query,
+    ...notificationResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...examResolvers.Mutation,
+    ...notificationResolvers.Mutation,
   },
   User: {
     ...userResolvers.User,
   },
   AuthPayload: authResolvers.AuthPayload,
   Exam: examResolvers.Exam,
+  Notification: notificationResolvers.Notification,
 };
