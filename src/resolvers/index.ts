@@ -11,6 +11,7 @@ import { postResolvers } from "./posts.js";
 import { jobResolvers } from "./jobs.js";
 import { mentorshipResolvers } from "./mentorship.js";
 import { eventResolvers } from "./events.js";
+import { campaignResolvers } from "./campaigns.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -43,6 +44,7 @@ export const resolvers = {
     ...jobResolvers.Query,
     ...mentorshipResolvers.Query,
     ...eventResolvers.Query,
+    ...campaignResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -57,6 +59,7 @@ export const resolvers = {
     ...jobResolvers.Mutation,
     ...mentorshipResolvers.Mutation,
     ...eventResolvers.Mutation,
+    ...campaignResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -81,5 +84,7 @@ export const resolvers = {
   MentorshipGoal: mentorshipResolvers.MentorshipGoal,
   Event: eventResolvers.Event,
   EventRegistration: eventResolvers.EventRegistration,
+  Campaign: campaignResolvers.Campaign,
+  Contribution: campaignResolvers.Contribution,
   Notification: notificationResolvers.Notification,
 };
