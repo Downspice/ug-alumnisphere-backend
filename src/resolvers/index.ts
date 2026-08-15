@@ -6,6 +6,7 @@ import { verificationResolvers } from "./verification.js";
 import { directoryResolvers } from "./directory.js";
 import { connectionResolvers } from "./connections.js";
 import { messagingResolvers } from "./messaging.js";
+import { communityResolvers } from "./communities.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -33,6 +34,7 @@ export const resolvers = {
     ...directoryResolvers.Query,
     ...connectionResolvers.Query,
     ...messagingResolvers.Query,
+    ...communityResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -42,6 +44,7 @@ export const resolvers = {
     ...verificationResolvers.Mutation,
     ...connectionResolvers.Mutation,
     ...messagingResolvers.Mutation,
+    ...communityResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -54,5 +57,8 @@ export const resolvers = {
   Connection: connectionResolvers.Connection,
   Conversation: messagingResolvers.Conversation,
   Message: messagingResolvers.Message,
+  Community: communityResolvers.Community,
+  CommunityMember: communityResolvers.CommunityMember,
+  CommunityJoinRequest: communityResolvers.CommunityJoinRequest,
   Notification: notificationResolvers.Notification,
 };
