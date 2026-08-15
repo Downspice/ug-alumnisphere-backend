@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
-import { createUser, errorCode, execute, resetDb, startTestDb, stopTestDb } from "./helpers.js";
+import {
+  createUser,
+  errorCode,
+  execute,
+  resetDb,
+  startTestDb,
+  stopTestDb,
+} from "./helpers.js";
 
 beforeAll(startTestDb);
 afterEach(resetDb);
@@ -35,7 +42,10 @@ describe("RBAC", () => {
   });
 
   test("given an alumni, createEvent is forbidden", async () => {
-    const alumni = await createUser({ email: "alumni.rbac@alumnisphere.ug", role: "alumni" });
+    const alumni = await createUser({
+      email: "alumni.rbac@alumnisphere.ug",
+      role: "alumni",
+    });
     const { errors } = await execute(
       `mutation CreateEvent($input: CreateEventInput!) {
         createEvent(input: $input) { id }
@@ -54,7 +64,10 @@ describe("RBAC", () => {
   });
 
   test("given an admin, createEvent succeeds as a draft", async () => {
-    const admin = await createUser({ email: "admin.rbac@alumnisphere.ug", role: "admin" });
+    const admin = await createUser({
+      email: "admin.rbac@alumnisphere.ug",
+      role: "admin",
+    });
     const { data, errors } = await execute<{ createEvent: { status: string } }>(
       `mutation CreateEvent($input: CreateEventInput!) {
         createEvent(input: $input) { status title }

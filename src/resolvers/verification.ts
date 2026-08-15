@@ -1,9 +1,18 @@
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
-import { VerificationRequest, IVerificationRequest } from "../models/VerificationRequest.js";
+import {
+  VerificationRequest,
+  IVerificationRequest,
+} from "../models/VerificationRequest.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAdmin, requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { notify } from "../utils/notify.js";
 import { claimStoredFile } from "../utils/storage.js";
 
@@ -78,7 +87,8 @@ export const verificationResolvers = {
           programme: input.programme.trim(),
           studentNumber: input.studentNumber.trim(),
           notes: input.notes?.trim() ?? "",
-          documentFileName: document?.originalName ?? input.documentFileName?.trim() ?? "",
+          documentFileName:
+            document?.originalName ?? input.documentFileName?.trim() ?? "",
           documentPath: document?.path ?? "",
           documentFileId: document?._id,
           status: "pending",
@@ -101,7 +111,11 @@ export const verificationResolvers = {
 
     reviewVerification: async (
       _: unknown,
-      { id, approve, rejectionReason }: { id: string; approve: boolean; rejectionReason?: string },
+      {
+        id,
+        approve,
+        rejectionReason,
+      }: { id: string; approve: boolean; rejectionReason?: string },
       context: MyContext
     ) => {
       const admin = requireAdmin(context);
@@ -166,7 +180,8 @@ export const verificationResolvers = {
       return User.findById(parent.reviewedById);
     },
     createdAt: (parent: IVerificationRequest) => parent.createdAt.toISOString(),
-    reviewedAt: (parent: IVerificationRequest) => parent.reviewedAt?.toISOString() ?? null,
+    reviewedAt: (parent: IVerificationRequest) =>
+      parent.reviewedAt?.toISOString() ?? null,
     documentDownloadUrl: (parent: IVerificationRequest) =>
       parent.documentFileId ? `/files/${parent.documentFileId.toString()}` : null,
   },

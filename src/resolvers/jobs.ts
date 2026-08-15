@@ -10,7 +10,13 @@ import {
 import { SavedJob } from "../models/SavedJob.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAuth, requireRole } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { claimStoredFile } from "../utils/storage.js";
 import { notify } from "../utils/notify.js";
 
@@ -34,7 +40,13 @@ export const jobResolvers = {
         location,
         industry,
         sort,
-      }: { search?: string; type?: string; location?: string; industry?: string; sort?: string },
+      }: {
+        search?: string;
+        type?: string;
+        location?: string;
+        industry?: string;
+        sort?: string;
+      },
       context: MyContext
     ) => {
       requireAuth(context);
@@ -45,8 +57,10 @@ export const jobResolvers = {
         }
         filter.type = type;
       }
-      if (location?.trim()) filter.location = new RegExp(escapeRegex(location.trim()), "i");
-      if (industry?.trim()) filter.industry = new RegExp(escapeRegex(industry.trim()), "i");
+      if (location?.trim())
+        filter.location = new RegExp(escapeRegex(location.trim()), "i");
+      if (industry?.trim())
+        filter.industry = new RegExp(escapeRegex(industry.trim()), "i");
       if (search?.trim()) {
         const term = new RegExp(escapeRegex(search.trim()), "i");
         filter.$or = [{ title: term }, { company: term }, { description: term }];
@@ -72,18 +86,27 @@ export const jobResolvers = {
     myJobApplications: async (_: unknown, __: unknown, context: MyContext) => {
       const { user } = requireAuth(context);
       try {
-        return await JobApplication.find({ applicantId: user._id }).sort({ createdAt: -1 });
+        return await JobApplication.find({ applicantId: user._id }).sort({
+          createdAt: -1,
+        });
       } catch (error) {
         internalError("Failed to load applications.", error);
       }
     },
 
-    jobApplications: async (_: unknown, { jobId }: { jobId: string }, context: MyContext) => {
+    jobApplications: async (
+      _: unknown,
+      { jobId }: { jobId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(jobId, "Job ID", mongoose);
       const job = await Job.findById(jobId);
       if (!job) notFound("Job not found.");
-      if (job.postedById.toString() !== user._id.toString() && normalizeRole(user.role) !== "admin") {
+      if (
+        job.postedById.toString() !== user._id.toString() &&
+        normalizeRole(user.role) !== "admin"
+      ) {
         forbidden("Only the poster can review applications.");
       }
       return JobApplication.find({ jobId }).sort({ createdAt: -1 });
@@ -169,7 +192,10 @@ export const jobResolvers = {
       assertValidObjectId(id, "Job ID", mongoose);
       const job = await Job.findById(id);
       if (!job) notFound("Job not found.");
-      if (job.postedById.toString() !== user._id.toString() && normalizeRole(user.role) !== "admin") {
+      if (
+        job.postedById.toString() !== user._id.toString() &&
+        normalizeRole(user.role) !== "admin"
+      ) {
         forbidden("Only the poster can close this job.");
       }
       job.status = "closed";
@@ -178,16 +204,22 @@ export const jobResolvers = {
 
     applyToJob: async (
       _: unknown,
-      { jobId, coverNote, resumeFileId }: { jobId: string; coverNote: string; resumeFileId?: string },
+      {
+        jobId,
+        coverNote,
+        resumeFileId,
+      }: { jobId: string; coverNote: string; resumeFileId?: string },
       context: MyContext
     ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(jobId, "Job ID", mongoose);
       const note = coverNote?.trim();
-      if (!note || note.length < 20) badUserInput("Write a cover note of at least 20 characters.");
+      if (!note || note.length < 20)
+        badUserInput("Write a cover note of at least 20 characters.");
       const job = await Job.findById(jobId);
       if (!job) notFound("Job not found.");
-      if (job.status !== "open") badUserInput("This job is no longer accepting applications.");
+      if (job.status !== "open")
+        badUserInput("This job is no longer accepting applications.");
       if (job.postedById.toString() === user._id.toString()) {
         badUserInput("You cannot apply to your own listing.");
       }
@@ -219,7 +251,11 @@ export const jobResolvers = {
       }
     },
 
-    withdrawApplication: async (_: unknown, { id }: { id: string }, context: MyContext) => {
+    withdrawApplication: async (
+      _: unknown,
+      { id }: { id: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(id, "Application ID", mongoose);
       const application = await JobApplication.findById(id);
@@ -227,8 +263,10 @@ export const jobResolvers = {
       if (application.applicantId.toString() !== user._id.toString()) {
         forbidden("You can only withdraw your own application.");
       }
-      if (application.status === "withdrawn") badUserInput("This application is already withdrawn.");
-      if (application.status === "rejected") badUserInput("A rejected application cannot be withdrawn.");
+      if (application.status === "withdrawn")
+        badUserInput("This application is already withdrawn.");
+      if (application.status === "rejected")
+        badUserInput("A rejected application cannot be withdrawn.");
       application.status = "withdrawn";
       return application.save();
     },
@@ -240,19 +278,27 @@ export const jobResolvers = {
     ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(id, "Application ID", mongoose);
-      if (!APPLICATION_STATUSES.includes(status as ApplicationStatus) || status === "withdrawn") {
+      if (
+        !APPLICATION_STATUSES.includes(status as ApplicationStatus) ||
+        status === "withdrawn"
+      ) {
         badUserInput("Invalid application status.");
       }
       const application = await JobApplication.findById(id);
       if (!application) notFound("Application not found.");
       const job = await Job.findById(application.jobId);
       if (!job) notFound("Job not found.");
-      if (job.postedById.toString() !== user._id.toString() && normalizeRole(user.role) !== "admin") {
+      if (
+        job.postedById.toString() !== user._id.toString() &&
+        normalizeRole(user.role) !== "admin"
+      ) {
         forbidden("Only the poster can update application status.");
       }
       const allowed = POSTER_TRANSITIONS[application.status] ?? [];
       if (!allowed.includes(status as ApplicationStatus)) {
-        badUserInput(`Cannot move an application from ${application.status} to ${status}.`);
+        badUserInput(
+          `Cannot move an application from ${application.status} to ${status}.`
+        );
       }
       application.status = status as ApplicationStatus;
       await application.save();
@@ -265,7 +311,11 @@ export const jobResolvers = {
       return application;
     },
 
-    toggleSaveJob: async (_: unknown, { jobId }: { jobId: string }, context: MyContext) => {
+    toggleSaveJob: async (
+      _: unknown,
+      { jobId }: { jobId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(jobId, "Job ID", mongoose);
       const job = await Job.findById(jobId);
@@ -285,13 +335,16 @@ export const jobResolvers = {
     postedBy: async (parent: IJob) => User.findById(parent.postedById),
     savedByMe: async (parent: IJob, _: unknown, context: MyContext) => {
       if (!context.user) return false;
-      return Boolean(await SavedJob.findOne({ jobId: parent._id, userId: context.user._id }));
+      return Boolean(
+        await SavedJob.findOne({ jobId: parent._id, userId: context.user._id })
+      );
     },
     myApplication: async (parent: IJob, _: unknown, context: MyContext) => {
       if (!context.user) return null;
       return JobApplication.findOne({ jobId: parent._id, applicantId: context.user._id });
     },
-    applicationCount: async (parent: IJob) => JobApplication.countDocuments({ jobId: parent._id }),
+    applicationCount: async (parent: IJob) =>
+      JobApplication.countDocuments({ jobId: parent._id }),
     createdAt: (parent: IJob) => parent.createdAt.toISOString(),
     updatedAt: (parent: IJob) => parent.updatedAt.toISOString(),
   },

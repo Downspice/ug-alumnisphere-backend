@@ -13,9 +13,7 @@ let memory: MongoMemoryServer | null = null;
 export async function startTestDb() {
   memory = await MongoMemoryServer.create();
   await mongoose.connect(memory.getUri(), { dbName: "ug_alumnisphere_test" });
-  await Promise.all(
-    Object.values(mongoose.models).map((model) => model.syncIndexes())
-  );
+  await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()));
   server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
 }
@@ -30,15 +28,19 @@ export async function stopTestDb() {
 
 export async function resetDb() {
   const collections = mongoose.connection.collections;
-  await Promise.all(Object.values(collections).map((collection) => collection.deleteMany({})));
+  await Promise.all(
+    Object.values(collections).map((collection) => collection.deleteMany({}))
+  );
 }
 
-export async function createUser(overrides: {
-  name?: string;
-  email: string;
-  role?: UserRole;
-  openToMentor?: boolean;
-} = { email: `user-${Date.now()}@test.ug` }): Promise<IUser> {
+export async function createUser(
+  overrides: {
+    name?: string;
+    email: string;
+    role?: UserRole;
+    openToMentor?: boolean;
+  } = { email: `user-${Date.now()}@test.ug` }
+): Promise<IUser> {
   return User.create({
     name: overrides.name ?? "Test User",
     email: overrides.email,

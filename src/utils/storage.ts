@@ -1,13 +1,28 @@
 import { randomUUID } from "node:crypto";
-import { getStorageClient, isStorageConfigured, PRIVATE_BUCKETS, STORAGE_BUCKETS } from "../config/supabase.js";
-import { FILE_PURPOSES, FilePurpose, IStoredFile, StoredFile } from "../models/StoredFile.js";
+import {
+  getStorageClient,
+  isStorageConfigured,
+  PRIVATE_BUCKETS,
+  STORAGE_BUCKETS,
+} from "../config/supabase.js";
+import {
+  FILE_PURPOSES,
+  FilePurpose,
+  IStoredFile,
+  StoredFile,
+} from "../models/StoredFile.js";
 import { badUserInput, forbidden, internalError, notFound } from "./errors.js";
 import mongoose from "mongoose";
 import { assertValidObjectId } from "./errors.js";
 
 export const PURPOSE_RULES: Record<
   FilePurpose,
-  { bucket: string; visibility: "public" | "private"; maxBytes: number; mimeTypes: string[] }
+  {
+    bucket: string;
+    visibility: "public" | "private";
+    maxBytes: number;
+    mimeTypes: string[];
+  }
 > = {
   avatar: {
     bucket: STORAGE_BUCKETS.profileImages,
@@ -45,7 +60,11 @@ const BUCKET_SPECS = [
   { id: STORAGE_BUCKETS.communityMedia, public: true, fileSizeLimit: 5 * 1024 * 1024 },
   { id: STORAGE_BUCKETS.eventMedia, public: true, fileSizeLimit: 5 * 1024 * 1024 },
   { id: STORAGE_BUCKETS.campaignMedia, public: true, fileSizeLimit: 5 * 1024 * 1024 },
-  { id: STORAGE_BUCKETS.verificationDocuments, public: false, fileSizeLimit: 8 * 1024 * 1024 },
+  {
+    id: STORAGE_BUCKETS.verificationDocuments,
+    public: false,
+    fileSizeLimit: 8 * 1024 * 1024,
+  },
   { id: STORAGE_BUCKETS.resumes, public: false, fileSizeLimit: 8 * 1024 * 1024 },
 ];
 
@@ -56,13 +75,18 @@ export function parsePurpose(value: string | undefined): FilePurpose {
   return value as FilePurpose;
 }
 
-export function validateUploadFile(purpose: FilePurpose, file: { mimetype: string; size: number; originalname: string }) {
+export function validateUploadFile(
+  purpose: FilePurpose,
+  file: { mimetype: string; size: number; originalname: string }
+) {
   const rules = PURPOSE_RULES[purpose];
   if (!rules.mimeTypes.includes(file.mimetype)) {
     badUserInput(`This file type is not allowed for ${purpose} uploads.`);
   }
   if (file.size < 1 || file.size > rules.maxBytes) {
-    badUserInput(`File must be between 1 byte and ${Math.round(rules.maxBytes / 1024 / 1024)}MB.`);
+    badUserInput(
+      `File must be between 1 byte and ${Math.round(rules.maxBytes / 1024 / 1024)}MB.`
+    );
   }
   if (!file.originalname?.trim()) {
     badUserInput("A file name is required.");
@@ -71,7 +95,9 @@ export function validateUploadFile(purpose: FilePurpose, file: { mimetype: strin
 }
 
 function extensionFor(mimeType: string, originalName: string) {
-  const fromName = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() : "";
+  const fromName = originalName.includes(".")
+    ? originalName.split(".").pop()?.toLowerCase()
+    : "";
   if (fromName && /^[a-z0-9]{1,8}$/.test(fromName)) return fromName;
   const map: Record<string, string> = {
     "image/jpeg": "jpg",
@@ -96,7 +122,9 @@ export async function ensureStorageBuckets() {
       fileSizeLimit: spec.fileSizeLimit,
     });
     if (created.error && !/already exists/i.test(created.error.message)) {
-      console.warn(`[storage] Could not create bucket ${spec.id}: ${created.error.message}`);
+      console.warn(
+        `[storage] Could not create bucket ${spec.id}: ${created.error.message}`
+      );
       if (/row-level security/i.test(created.error.message)) {
         console.warn(
           "[storage] The publishable/anon key cannot create buckets. Add SUPABASE_SERVICE_ROLE_KEY to backend/.env, or create the buckets in the Supabase dashboard."
@@ -160,11 +188,16 @@ export async function storeUpload(input: {
   }
 }
 
-export async function claimStoredFile(fileId: string, ownerId: string, purpose: FilePurpose) {
+export async function claimStoredFile(
+  fileId: string,
+  ownerId: string,
+  purpose: FilePurpose
+) {
   assertValidObjectId(fileId, "File ID", mongoose);
   const file = await StoredFile.findById(fileId);
   if (!file) notFound("Uploaded file not found. Upload it again.");
-  if (file.ownerId.toString() !== ownerId) forbidden("This file belongs to another account.");
+  if (file.ownerId.toString() !== ownerId)
+    forbidden("This file belongs to another account.");
   if (file.purpose !== purpose) badUserInput(`This file cannot be used as a ${purpose}.`);
   if (!file.claimed) {
     file.claimed = true;
@@ -177,7 +210,9 @@ export async function resolveDownloadUrl(file: IStoredFile) {
   if (file.visibility === "public" && file.publicUrl) return file.publicUrl;
   if (!isStorageConfigured()) return "";
   const client = getStorageClient();
-  const signed = await client.storage.from(file.bucket).createSignedUrl(file.path, 60 * 10);
+  const signed = await client.storage
+    .from(file.bucket)
+    .createSignedUrl(file.path, 60 * 10);
   if (signed.error || !signed.data?.signedUrl) {
     if (file.publicUrl) return file.publicUrl;
     internalError("Could not create a download link.", signed.error);

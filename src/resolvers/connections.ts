@@ -3,7 +3,13 @@ import { User, IUser } from "../models/User.js";
 import { Connection, connectionPairKey, IConnection } from "../models/Connection.js";
 import type { MyContext } from "../types/context.js";
 import { requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { notify } from "../utils/notify.js";
 
 async function loadUser(id: mongoose.Types.ObjectId | string) {
@@ -75,7 +81,11 @@ export const connectionResolvers = {
         const scored = candidates
           .map((candidate) => {
             const reasons: string[] = [];
-            if (user.programme && candidate.programme && user.programme === candidate.programme) {
+            if (
+              user.programme &&
+              candidate.programme &&
+              user.programme === candidate.programme
+            ) {
               reasons.push("Same programme");
             }
             if (
@@ -85,10 +95,18 @@ export const connectionResolvers = {
             ) {
               reasons.push("Same graduation year");
             }
-            if (user.industry && candidate.industry && user.industry === candidate.industry) {
+            if (
+              user.industry &&
+              candidate.industry &&
+              user.industry === candidate.industry
+            ) {
               reasons.push("Same industry");
             }
-            if (user.location && candidate.location && user.location === candidate.location) {
+            if (
+              user.location &&
+              candidate.location &&
+              user.location === candidate.location
+            ) {
               reasons.push("Same location");
             }
             const sharedSkills = (user.skills ?? []).filter((skill) =>
@@ -110,7 +128,11 @@ export const connectionResolvers = {
       }
     },
 
-    connectionStatus: async (_: unknown, { userId }: { userId: string }, context: MyContext) => {
+    connectionStatus: async (
+      _: unknown,
+      { userId }: { userId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(userId, "User ID", mongoose);
       if (userId === user._id.toString()) return null;
@@ -236,7 +258,11 @@ export const connectionResolvers = {
       }
     },
 
-    removeConnection: async (_: unknown, { userId }: { userId: string }, context: MyContext) => {
+    removeConnection: async (
+      _: unknown,
+      { userId }: { userId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(userId, "User ID", mongoose);
       const pairKey = connectionPairKey(user._id.toString(), userId);

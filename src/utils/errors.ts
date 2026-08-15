@@ -21,7 +21,9 @@ export function unauthenticated(message = "Authentication is required."): never 
   });
 }
 
-export function forbidden(message = "You do not have permission to perform this action."): never {
+export function forbidden(
+  message = "You do not have permission to perform this action."
+): never {
   throw new GraphQLError(message, {
     extensions: { code: "FORBIDDEN" },
   });
@@ -32,9 +34,11 @@ export function internalError(message: string, originalError?: unknown): never {
     extensions: {
       code: "INTERNAL_SERVER_ERROR",
       originalError:
-        originalError instanceof Error ? originalError.message : originalError
-          ? String(originalError)
-          : undefined,
+        originalError instanceof Error
+          ? originalError.message
+          : originalError
+            ? String(originalError)
+            : undefined,
     },
   });
 }

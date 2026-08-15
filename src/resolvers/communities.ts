@@ -2,10 +2,19 @@ import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import { Community, ICommunity, slugify } from "../models/Community.js";
 import { CommunityMember, ICommunityMember } from "../models/CommunityMember.js";
-import { CommunityJoinRequest, ICommunityJoinRequest } from "../models/CommunityJoinRequest.js";
+import {
+  CommunityJoinRequest,
+  ICommunityJoinRequest,
+} from "../models/CommunityJoinRequest.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 async function membership(communityId: string, userId: string) {
   return CommunityMember.findOne({ communityId, userId });
@@ -40,17 +49,24 @@ export const communityResolvers = {
       try {
         const filter: Record<string, unknown> = {};
         if (search?.trim()) {
-          filter.name = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+          filter.name = new RegExp(
+            search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          );
         }
         if (mine) {
-          const mineIds = await CommunityMember.find({ userId: user._id }).distinct("communityId");
+          const mineIds = await CommunityMember.find({ userId: user._id }).distinct(
+            "communityId"
+          );
           filter._id = { $in: mineIds };
         } else {
           filter.$or = [
             { isPrivate: false },
             {
               _id: {
-                $in: await CommunityMember.find({ userId: user._id }).distinct("communityId"),
+                $in: await CommunityMember.find({ userId: user._id }).distinct(
+                  "communityId"
+                ),
               },
             },
           ];
@@ -75,7 +91,11 @@ export const communityResolvers = {
       return community;
     },
 
-    communityMembers: async (_: unknown, { communityId }: { communityId: string }, context: MyContext) => {
+    communityMembers: async (
+      _: unknown,
+      { communityId }: { communityId: string },
+      context: MyContext
+    ) => {
       requireAuth(context);
       assertValidObjectId(communityId, "Community ID", mongoose);
       return CommunityMember.find({ communityId }).sort({ createdAt: 1 });
@@ -88,8 +108,14 @@ export const communityResolvers = {
     ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(communityId, "Community ID", mongoose);
-      await requireModerator(communityId, user._id.toString(), normalizeRole(user.role) === "admin");
-      return CommunityJoinRequest.find({ communityId, status: "pending" }).sort({ createdAt: -1 });
+      await requireModerator(
+        communityId,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
+      return CommunityJoinRequest.find({ communityId, status: "pending" }).sort({
+        createdAt: -1,
+      });
     },
   },
 
@@ -101,7 +127,8 @@ export const communityResolvers = {
     ) => {
       const { user } = requireAuth(context);
       const name = input.name?.trim();
-      if (!name || name.length < 3) badUserInput("Community name must be at least 3 characters.");
+      if (!name || name.length < 3)
+        badUserInput("Community name must be at least 3 characters.");
       let slug = slugify(name);
       if (!slug) badUserInput("Community name must include letters or numbers.");
       const clash = await Community.findOne({ slug });
@@ -140,7 +167,8 @@ export const communityResolvers = {
         forbidden("Only the owner can update this community.");
       }
       if (input.name?.trim()) community.name = input.name.trim();
-      if (input.description !== undefined) community.description = input.description.trim();
+      if (input.description !== undefined)
+        community.description = input.description.trim();
       return community.save();
     },
 
@@ -187,7 +215,9 @@ export const communityResolvers = {
       const member = await membership(id, user._id.toString());
       if (!member) badUserInput("You are not a member of this community.");
       if (member.role === "owner") {
-        forbidden("Owners cannot leave. Transfer ownership or archive the community first.");
+        forbidden(
+          "Owners cannot leave. Transfer ownership or archive the community first."
+        );
       }
       await member.deleteOne();
       await Community.findByIdAndUpdate(id, { $inc: { memberCount: -1 } });
@@ -208,18 +238,24 @@ export const communityResolvers = {
         user._id.toString(),
         normalizeRole(user.role) === "admin"
       );
-      if (request.status !== "pending") badUserInput("This request is no longer pending.");
+      if (request.status !== "pending")
+        badUserInput("This request is no longer pending.");
       request.status = approve ? "approved" : "rejected";
       await request.save();
       if (approve) {
-        const already = await membership(request.communityId.toString(), request.userId.toString());
+        const already = await membership(
+          request.communityId.toString(),
+          request.userId.toString()
+        );
         if (!already) {
           await CommunityMember.create({
             communityId: request.communityId,
             userId: request.userId,
             role: "member",
           });
-          await Community.findByIdAndUpdate(request.communityId, { $inc: { memberCount: 1 } });
+          await Community.findByIdAndUpdate(request.communityId, {
+            $inc: { memberCount: 1 },
+          });
         }
       }
       return request;
@@ -227,7 +263,11 @@ export const communityResolvers = {
 
     assignModerator: async (
       _: unknown,
-      { communityId, userId, makeModerator }: { communityId: string; userId: string; makeModerator: boolean },
+      {
+        communityId,
+        userId,
+        makeModerator,
+      }: { communityId: string; userId: string; makeModerator: boolean },
       context: MyContext
     ) => {
       const { user } = requireAuth(context);
@@ -239,7 +279,8 @@ export const communityResolvers = {
       }
       const target = await membership(communityId, userId);
       if (!target) notFound("That person is not a member.");
-      if (target.role === "owner") badUserInput("The owner role cannot be changed this way.");
+      if (target.role === "owner")
+        badUserInput("The owner role cannot be changed this way.");
       target.role = makeModerator ? "moderator" : "member";
       return target.save();
     },

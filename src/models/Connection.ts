@@ -18,8 +18,18 @@ export function connectionPairKey(a: string, b: string): string {
 
 const ConnectionSchema = new Schema<IConnection>(
   {
-    requesterId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    addresseeId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    requesterId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    addresseeId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     pairKey: { type: String, required: true, unique: true },
     status: {
       type: String,

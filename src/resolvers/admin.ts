@@ -11,7 +11,12 @@ import { Report, IReport } from "../models/Report.js";
 import { VerificationRequest } from "../models/VerificationRequest.js";
 import type { MyContext } from "../types/context.js";
 import { requireAdmin } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 export const adminResolvers = {
   Query: {
@@ -61,22 +66,23 @@ export const adminResolvers = {
     adminAnalytics: async (_: unknown, __: unknown, context: MyContext) => {
       requireAdmin(context);
       try {
-        const [roleGroups, jobGroups, eventGroups, campaignDocs, monthly] = await Promise.all([
-          User.aggregate([{ $group: { _id: "$role", value: { $sum: 1 } } }]),
-          Job.aggregate([{ $group: { _id: "$type", value: { $sum: 1 } } }]),
-          Event.aggregate([{ $group: { _id: "$status", value: { $sum: 1 } } }]),
-          Campaign.find().select("title goalAmount"),
-          Contribution.aggregate([
-            { $match: { status: "recorded" } },
-            {
-              $group: {
-                _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
-                value: { $sum: "$amount" },
+        const [roleGroups, jobGroups, eventGroups, campaignDocs, monthly] =
+          await Promise.all([
+            User.aggregate([{ $group: { _id: "$role", value: { $sum: 1 } } }]),
+            Job.aggregate([{ $group: { _id: "$type", value: { $sum: 1 } } }]),
+            Event.aggregate([{ $group: { _id: "$status", value: { $sum: 1 } } }]),
+            Campaign.find().select("title goalAmount"),
+            Contribution.aggregate([
+              { $match: { status: "recorded" } },
+              {
+                $group: {
+                  _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+                  value: { $sum: "$amount" },
+                },
               },
-            },
-            { $sort: { _id: 1 } },
-          ]),
-        ]);
+              { $sort: { _id: 1 } },
+            ]),
+          ]);
 
         const campaignProgress = await Promise.all(
           campaignDocs.map(async (campaign) => {
@@ -97,8 +103,14 @@ export const adminResolvers = {
             label: item._id === "instructor" ? "alumni" : String(item._id),
             value: item.value,
           })),
-          jobsByType: jobGroups.map((item) => ({ label: String(item._id), value: item.value })),
-          eventsByStatus: eventGroups.map((item) => ({ label: String(item._id), value: item.value })),
+          jobsByType: jobGroups.map((item) => ({
+            label: String(item._id),
+            value: item.value,
+          })),
+          eventsByStatus: eventGroups.map((item) => ({
+            label: String(item._id),
+            value: item.value,
+          })),
           campaignProgress,
           contributionsByMonth: monthly.map((item) => ({
             label: String(item._id),
@@ -133,7 +145,8 @@ export const adminResolvers = {
       if (!ACCOUNT_STATUSES.includes(status as (typeof ACCOUNT_STATUSES)[number])) {
         badUserInput("Account status must be active, suspended, or pending.");
       }
-      if (id === user._id.toString()) badUserInput("You cannot change your own account status.");
+      if (id === user._id.toString())
+        badUserInput("You cannot change your own account status.");
       const target = await User.findById(id);
       if (!target) notFound("User not found.");
       target.accountStatus = status as (typeof ACCOUNT_STATUSES)[number];

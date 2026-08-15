@@ -37,7 +37,9 @@ export function isSupabaseConfigured(): boolean {
 
 export function getStorageClient(): SupabaseClient {
   if (!isStorageConfigured()) {
-    throw new Error("Supabase Storage is not configured. Set SUPABASE_URL and a Supabase key.");
+    throw new Error(
+      "Supabase Storage is not configured. Set SUPABASE_URL and a Supabase key."
+    );
   }
   if (!storageClient) {
     storageClient = createClient(process.env.SUPABASE_URL as string, storageKey(), {

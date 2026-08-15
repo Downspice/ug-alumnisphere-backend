@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
-import { createUser, errorCode, execute, resetDb, startTestDb, stopTestDb } from "./helpers.js";
+import {
+  createUser,
+  errorCode,
+  execute,
+  resetDb,
+  startTestDb,
+  stopTestDb,
+} from "./helpers.js";
 
 beforeAll(startTestDb);
 afterEach(resetDb);
@@ -86,7 +93,11 @@ describe("auth", () => {
 
   test("given an authenticated user, me returns that user", async () => {
     const user = await createUser({ email: "me@alumnisphere.ug", name: "Me User" });
-    const { data, errors } = await execute<{ me: { email: string } }>(`query { me { email } }`, {}, user);
+    const { data, errors } = await execute<{ me: { email: string } }>(
+      `query { me { email } }`,
+      {},
+      user
+    );
     expect(errors).toBeFalsy();
     expect(data?.me.email).toBe("me@alumnisphere.ug");
   });

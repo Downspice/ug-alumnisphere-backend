@@ -126,7 +126,9 @@ export async function initServer(): Promise<void> {
           console.warn("[storage] Bucket setup skipped:", error);
         });
       } else {
-        console.warn("[storage] Supabase is not configured. File uploads will fail until keys are set.");
+        console.warn(
+          "[storage] Supabase is not configured. File uploads will fail until keys are set."
+        );
       }
       await apolloServer.start();
       // Mount GraphQL expressMiddleware after start() completes

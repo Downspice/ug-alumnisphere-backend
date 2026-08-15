@@ -4,7 +4,13 @@ import { Event, IEvent } from "../models/Event.js";
 import { EventRegistration, IEventRegistration } from "../models/EventRegistration.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAdmin, requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -40,7 +46,8 @@ export const eventResolvers = {
         const term = new RegExp(escapeRegex(search.trim()), "i");
         filter.$or = [{ title: term }, { description: term }];
       }
-      if (location?.trim()) filter.location = new RegExp(escapeRegex(location.trim()), "i");
+      if (location?.trim())
+        filter.location = new RegExp(escapeRegex(location.trim()), "i");
       try {
         return await Event.find(filter).sort({ startsAt: 1 }).limit(80);
       } catch (error) {
@@ -136,7 +143,8 @@ export const eventResolvers = {
       assertValidObjectId(id, "Event ID", mongoose);
       const event = await Event.findById(id);
       if (!event) notFound("Event not found.");
-      if (event.status === "cancelled") badUserInput("Cancelled events cannot be edited.");
+      if (event.status === "cancelled")
+        badUserInput("Cancelled events cannot be edited.");
       if (input.title?.trim()) event.title = input.title.trim();
       if (input.description?.trim()) event.description = input.description.trim();
       if (input.location?.trim()) event.location = input.location.trim();
@@ -154,7 +162,8 @@ export const eventResolvers = {
       assertValidObjectId(id, "Event ID", mongoose);
       const event = await Event.findById(id);
       if (!event) notFound("Event not found.");
-      if (event.status === "cancelled") badUserInput("A cancelled event cannot be published.");
+      if (event.status === "cancelled")
+        badUserInput("A cancelled event cannot be published.");
       event.status = "published";
       return event.save();
     },
@@ -168,12 +177,17 @@ export const eventResolvers = {
       return event.save();
     },
 
-    registerForEvent: async (_: unknown, { eventId }: { eventId: string }, context: MyContext) => {
+    registerForEvent: async (
+      _: unknown,
+      { eventId }: { eventId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(eventId, "Event ID", mongoose);
       const event = await Event.findById(eventId);
       if (!event) notFound("Event not found.");
-      if (event.status !== "published") badUserInput("This event is not open for registration.");
+      if (event.status !== "published")
+        badUserInput("This event is not open for registration.");
       if (event.capacity) {
         const count = await EventRegistration.countDocuments({ eventId });
         if (count >= event.capacity) badUserInput("This event is full.");
@@ -192,7 +206,11 @@ export const eventResolvers = {
       }
     },
 
-    cancelEventRegistration: async (_: unknown, { eventId }: { eventId: string }, context: MyContext) => {
+    cancelEventRegistration: async (
+      _: unknown,
+      { eventId }: { eventId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(eventId, "Event ID", mongoose);
       const registration = await EventRegistration.findOne({ eventId, userId: user._id });
@@ -205,10 +223,13 @@ export const eventResolvers = {
   Event: {
     id: (parent: IEvent) => parent._id.toString(),
     createdBy: async (parent: IEvent) => User.findById(parent.createdById),
-    registeredCount: async (parent: IEvent) => EventRegistration.countDocuments({ eventId: parent._id }),
+    registeredCount: async (parent: IEvent) =>
+      EventRegistration.countDocuments({ eventId: parent._id }),
     registeredByMe: async (parent: IEvent, _: unknown, context: MyContext) => {
       if (!context.user) return false;
-      return Boolean(await EventRegistration.findOne({ eventId: parent._id, userId: context.user._id }));
+      return Boolean(
+        await EventRegistration.findOne({ eventId: parent._id, userId: context.user._id })
+      );
     },
     startsAt: (parent: IEvent) => parent.startsAt.toISOString(),
     endsAt: (parent: IEvent) => parent.endsAt?.toISOString() ?? null,

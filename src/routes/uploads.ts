@@ -52,7 +52,9 @@ export function registerUploadRoutes(app: import("express").Application) {
         return;
       }
       await ensureStorageBuckets();
-      const purpose = parsePurpose(typeof req.body?.purpose === "string" ? req.body.purpose : undefined);
+      const purpose = parsePurpose(
+        typeof req.body?.purpose === "string" ? req.body.purpose : undefined
+      );
       const stored = await storeUpload({
         ownerId: user._id.toString(),
         purpose,

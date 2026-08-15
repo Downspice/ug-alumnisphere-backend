@@ -134,7 +134,10 @@ async function seed() {
       [ama, yaw],
       [ama, kwame],
     ] as const) {
-      const pairKey = connectionPairKey(requester._id.toString(), addressee._id.toString());
+      const pairKey = connectionPairKey(
+        requester._id.toString(),
+        addressee._id.toString()
+      );
       await Connection.findOneAndUpdate(
         { pairKey },
         {
@@ -184,7 +187,10 @@ async function seed() {
     }
     console.log("[seed] Demo communities");
 
-    const existingFeed = await Post.findOne({ authorId: ama._id, communityId: { $exists: false } });
+    const existingFeed = await Post.findOne({
+      authorId: ama._id,
+      communityId: { $exists: false },
+    });
     if (!existingFeed) {
       await Post.create({
         authorId: ama._id,
@@ -249,21 +255,23 @@ async function seed() {
         postedById: ama._id,
         status: "open",
       }));
-      const internExists = await Job.findOne({ title: "Product intern, alumni programmes" });
-      if (!internExists) {
-        await Job.create({
-          title: "Product intern, alumni programmes",
-          company: "MTN Ghana",
-          location: "Accra, Ghana",
-          type: "internship",
-          industry: "Technology",
-          description:
-            "Support alumni product discovery interviews and write research notes for the next campus clinic.",
-          requirements: "Clear writing and curiosity about alumni networks.",
-          postedById: efua._id,
-          status: "open",
-        });
-      }
+    const internExists = await Job.findOne({
+      title: "Product intern, alumni programmes",
+    });
+    if (!internExists) {
+      await Job.create({
+        title: "Product intern, alumni programmes",
+        company: "MTN Ghana",
+        location: "Accra, Ghana",
+        type: "internship",
+        industry: "Technology",
+        description:
+          "Support alumni product discovery interviews and write research notes for the next campus clinic.",
+        requirements: "Clear writing and curiosity about alumni networks.",
+        postedById: efua._id,
+        status: "open",
+      });
+    }
     await JobApplication.findOneAndUpdate(
       { jobId: softwareJob._id, applicantId: kwame._id },
       {
@@ -295,7 +303,8 @@ async function seed() {
         menteeId: kwame._id,
         mentorId: ama._id,
         pairKey: amaKwameKey,
-        message: "I would like monthly feedback on internships and a first engineering role.",
+        message:
+          "I would like monthly feedback on internships and a first engineering role.",
         status: "accepted",
       },
       { upsert: true }
@@ -307,7 +316,8 @@ async function seed() {
         menteeId: kwame._id,
         mentorId: yaw._id,
         pairKey: yawKwameKey,
-        message: "I want advice on moving from campus projects into infrastructure internships.",
+        message:
+          "I want advice on moving from campus projects into infrastructure internships.",
         status: "pending",
       },
       { upsert: true }
@@ -332,7 +342,8 @@ async function seed() {
       if (!(await Event.findOne({ title: "Career clinic (draft)" }))) {
         await Event.create({
           title: "Career clinic (draft)",
-          description: "Small-group CV and interview practice. Publish when facilitators are confirmed.",
+          description:
+            "Small-group CV and interview practice. Publish when facilitators are confirmed.",
           location: "Legon, Accra",
           startsAt: new Date("2026-10-04T10:00:00.000Z"),
           capacity: 24,
@@ -343,7 +354,8 @@ async function seed() {
       if (!(await Event.findOne({ title: "Kumasi cancelled mixer" }))) {
         await Event.create({
           title: "Kumasi cancelled mixer",
-          description: "Postponed due to venue unavailability. Kept as a cancelled record.",
+          description:
+            "Postponed due to venue unavailability. Kept as a cancelled record.",
           location: "Kumasi, Ghana",
           startsAt: new Date("2026-08-20T18:00:00.000Z"),
           status: "cancelled",
@@ -371,13 +383,17 @@ async function seed() {
       if (!(await Campaign.findOne({ title: "Library draft appeal" }))) {
         await Campaign.create({
           title: "Library draft appeal",
-          description: "Draft campaign for Balme Library equipment. Publish when the goal is confirmed.",
+          description:
+            "Draft campaign for Balme Library equipment. Publish when the goal is confirmed.",
           goalAmount: 20000,
           status: "draft",
           createdById: admin._id,
         });
       }
-      const existingGift = await Contribution.findOne({ campaignId: scholarship._id, contributorId: ama._id });
+      const existingGift = await Contribution.findOne({
+        campaignId: scholarship._id,
+        contributorId: ama._id,
+      });
       if (!existingGift) {
         await Contribution.create({
           campaignId: scholarship._id,
@@ -406,7 +422,10 @@ async function seed() {
           createdAt: new Date("2026-08-01T10:00:00.000Z"),
         });
       }
-      const existingNote = await Notification.findOne({ userId: kwame._id, title: "Welcome to AlumniSphere" });
+      const existingNote = await Notification.findOne({
+        userId: kwame._id,
+        title: "Welcome to AlumniSphere",
+      });
       if (!existingNote) {
         await Notification.create({
           userId: kwame._id,
@@ -430,7 +449,10 @@ async function seed() {
           read: false,
         });
       }
-      const feedPost = await Post.findOne({ type: "text", communityId: { $exists: false } });
+      const feedPost = await Post.findOne({
+        type: "text",
+        communityId: { $exists: false },
+      });
       if (feedPost) {
         await Report.findOneAndUpdate(
           { reporterId: kwame._id, targetType: "post", targetId: feedPost._id },

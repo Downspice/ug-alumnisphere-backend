@@ -5,7 +5,13 @@ import { Contribution, IContribution } from "../models/Contribution.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAdmin, requireAuth } from "../utils/auth.js";
 import { notify } from "../utils/notify.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -13,7 +19,12 @@ function escapeRegex(value: string) {
 
 async function campaignTotals(campaignId: mongoose.Types.ObjectId | string) {
   const [summary] = await Contribution.aggregate([
-    { $match: { campaignId: new mongoose.Types.ObjectId(String(campaignId)), status: "recorded" } },
+    {
+      $match: {
+        campaignId: new mongoose.Types.ObjectId(String(campaignId)),
+        status: "recorded",
+      },
+    },
     {
       $group: {
         _id: "$campaignId",
@@ -73,13 +84,17 @@ export const campaignResolvers = {
     ) => {
       requireAuth(context);
       assertValidObjectId(campaignId, "Campaign ID", mongoose);
-      return Contribution.find({ campaignId, status: "recorded" }).sort({ createdAt: -1 }).limit(80);
+      return Contribution.find({ campaignId, status: "recorded" })
+        .sort({ createdAt: -1 })
+        .limit(80);
     },
 
     myContributions: async (_: unknown, __: unknown, context: MyContext) => {
       const { user } = requireAuth(context);
       try {
-        return await Contribution.find({ contributorId: user._id }).sort({ createdAt: -1 });
+        return await Contribution.find({ contributorId: user._id }).sort({
+          createdAt: -1,
+        });
       } catch (error) {
         internalError("Failed to load contribution history.", error);
       }
@@ -92,7 +107,12 @@ export const campaignResolvers = {
       {
         input,
       }: {
-        input: { title: string; description: string; goalAmount: number; deadline?: string };
+        input: {
+          title: string;
+          description: string;
+          goalAmount: number;
+          deadline?: string;
+        };
       },
       context: MyContext
     ) => {
@@ -124,7 +144,12 @@ export const campaignResolvers = {
         input,
       }: {
         id: string;
-        input: { title?: string; description?: string; goalAmount?: number; deadline?: string };
+        input: {
+          title?: string;
+          description?: string;
+          goalAmount?: number;
+          deadline?: string;
+        };
       },
       context: MyContext
     ) => {
@@ -132,7 +157,8 @@ export const campaignResolvers = {
       assertValidObjectId(id, "Campaign ID", mongoose);
       const campaign = await Campaign.findById(id);
       if (!campaign) notFound("Campaign not found.");
-      if (campaign.status === "closed") badUserInput("Closed campaigns cannot be edited.");
+      if (campaign.status === "closed")
+        badUserInput("Closed campaigns cannot be edited.");
       if (input.title?.trim()) campaign.title = input.title.trim();
       if (input.description?.trim()) campaign.description = input.description.trim();
       if (input.goalAmount !== undefined) {
@@ -148,7 +174,8 @@ export const campaignResolvers = {
       assertValidObjectId(id, "Campaign ID", mongoose);
       const campaign = await Campaign.findById(id);
       if (!campaign) notFound("Campaign not found.");
-      if (campaign.status === "closed") badUserInput("A closed campaign cannot be published.");
+      if (campaign.status === "closed")
+        badUserInput("A closed campaign cannot be published.");
       campaign.status = "active";
       return campaign.save();
     },
@@ -178,7 +205,8 @@ export const campaignResolvers = {
       if (amount > 1_000_000) badUserInput("Amount is too large for a recorded pledge.");
       const campaign = await Campaign.findById(campaignId);
       if (!campaign) notFound("Campaign not found.");
-      if (campaign.status !== "active") badUserInput("This campaign is not accepting records.");
+      if (campaign.status !== "active")
+        badUserInput("This campaign is not accepting records.");
       if (campaign.deadline && campaign.deadline.getTime() < Date.now()) {
         badUserInput("This campaign deadline has passed.");
       }
@@ -207,8 +235,10 @@ export const campaignResolvers = {
   Campaign: {
     id: (parent: ICampaign) => parent._id.toString(),
     createdBy: async (parent: ICampaign) => User.findById(parent.createdById),
-    raisedAmount: async (parent: ICampaign) => (await campaignTotals(parent._id)).raisedAmount,
-    contributorCount: async (parent: ICampaign) => (await campaignTotals(parent._id)).contributorCount,
+    raisedAmount: async (parent: ICampaign) =>
+      (await campaignTotals(parent._id)).raisedAmount,
+    contributorCount: async (parent: ICampaign) =>
+      (await campaignTotals(parent._id)).contributorCount,
     remainingAmount: async (parent: ICampaign) => {
       const { raisedAmount } = await campaignTotals(parent._id);
       return Math.max(0, parent.goalAmount - raisedAmount);

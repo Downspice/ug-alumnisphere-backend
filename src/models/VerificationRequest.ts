@@ -20,7 +20,12 @@ export interface IVerificationRequest extends Document {
 
 const VerificationRequestSchema = new Schema<IVerificationRequest>(
   {
-    applicantId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    applicantId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     graduationYear: { type: Number, required: true, min: 1950, max: 2100 },
     programme: { type: String, required: true, trim: true, maxlength: 160 },
     studentNumber: { type: String, required: true, trim: true, maxlength: 40 },

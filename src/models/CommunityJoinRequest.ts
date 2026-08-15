@@ -12,7 +12,11 @@ const CommunityJoinRequestSchema = new Schema<ICommunityJoinRequest>(
   {
     communityId: { type: Schema.Types.ObjectId, ref: "Community", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );

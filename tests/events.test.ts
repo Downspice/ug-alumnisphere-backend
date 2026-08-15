@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
-import { createUser, errorCode, execute, resetDb, startTestDb, stopTestDb } from "./helpers.js";
+import {
+  createUser,
+  errorCode,
+  execute,
+  resetDb,
+  startTestDb,
+  stopTestDb,
+} from "./helpers.js";
 import { EventRegistration } from "../src/models/EventRegistration.js";
 
 beforeAll(startTestDb);
@@ -8,7 +15,10 @@ afterAll(stopTestDb);
 
 describe("event registration uniqueness", () => {
   test("given a user is already registered, a second register is rejected", async () => {
-    const admin = await createUser({ email: "event.admin@alumnisphere.ug", role: "admin" });
+    const admin = await createUser({
+      email: "event.admin@alumnisphere.ug",
+      role: "admin",
+    });
     const attendee = await createUser({ email: "event.user@alumnisphere.ug" });
 
     const created = await execute<{ createEvent: { id: string } }>(
@@ -50,6 +60,8 @@ describe("event registration uniqueness", () => {
     );
     expect(errorCode(second.errors)).toBe("BAD_USER_INPUT");
     expect(second.errors?.[0].message).toContain("already registered");
-    expect(await EventRegistration.countDocuments({ eventId, userId: attendee._id })).toBe(1);
+    expect(
+      await EventRegistration.countDocuments({ eventId, userId: attendee._id })
+    ).toBe(1);
   });
 });

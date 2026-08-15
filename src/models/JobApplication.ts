@@ -29,7 +29,12 @@ const JobApplicationSchema = new Schema<IJobApplication>(
     resumeFileName: { type: String, trim: true, maxlength: 180, default: "" },
     resumePath: { type: String, default: "" },
     resumeFileId: { type: Schema.Types.ObjectId, ref: "StoredFile" },
-    status: { type: String, enum: APPLICATION_STATUSES, default: "submitted", index: true },
+    status: {
+      type: String,
+      enum: APPLICATION_STATUSES,
+      default: "submitted",
+      index: true,
+    },
   },
   { timestamps: true }
 );
@@ -38,4 +43,7 @@ JobApplicationSchema.index({ jobId: 1, applicantId: 1 }, { unique: true });
 JobApplicationSchema.index({ applicantId: 1, createdAt: -1 });
 JobApplicationSchema.index({ jobId: 1, status: 1 });
 
-export const JobApplication = mongoose.model<IJobApplication>("JobApplication", JobApplicationSchema);
+export const JobApplication = mongoose.model<IJobApplication>(
+  "JobApplication",
+  JobApplicationSchema
+);

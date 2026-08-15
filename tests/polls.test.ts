@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
-import { createUser, errorCode, execute, resetDb, startTestDb, stopTestDb } from "./helpers.js";
+import {
+  createUser,
+  errorCode,
+  execute,
+  resetDb,
+  startTestDb,
+  stopTestDb,
+} from "./helpers.js";
 import { PollVote } from "../src/models/PollVote.js";
 
 beforeAll(startTestDb);

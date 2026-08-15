@@ -10,7 +10,13 @@ import { Report } from "../models/Report.js";
 import { PollVote } from "../models/PollVote.js";
 import type { MyContext } from "../types/context.js";
 import { normalizeRole, requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { claimStoredFile } from "../utils/storage.js";
 
 function isValidHttpUrl(value: string) {
@@ -22,7 +28,11 @@ function isValidHttpUrl(value: string) {
   }
 }
 
-async function canAccessCommunity(communityId: string | undefined, userId: string, isAdmin: boolean) {
+async function canAccessCommunity(
+  communityId: string | undefined,
+  userId: string,
+  isAdmin: boolean
+) {
   if (!communityId) return true;
   const community = await Community.findById(communityId);
   if (!community) notFound("Community not found.");
@@ -54,7 +64,9 @@ export const postResolvers = {
         await canAccessCommunity(communityId, user._id.toString(), isAdmin);
       }
       try {
-        const filter = communityId ? { communityId } : { communityId: { $exists: false } };
+        const filter = communityId
+          ? { communityId }
+          : { communityId: { $exists: false } };
         return await Post.find(filter).sort({ createdAt: -1 }).limit(80);
       } catch (error) {
         internalError("Failed to load the feed.", error);
@@ -66,7 +78,11 @@ export const postResolvers = {
       assertValidObjectId(id, "Post ID", mongoose);
       const post = await Post.findById(id);
       if (!post) notFound("Post not found.");
-      await requirePostAccess(post, user._id.toString(), normalizeRole(user.role) === "admin");
+      await requirePostAccess(
+        post,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
       return post;
     },
 
@@ -75,7 +91,11 @@ export const postResolvers = {
       assertValidObjectId(postId, "Post ID", mongoose);
       const post = await Post.findById(postId);
       if (!post) notFound("Post not found.");
-      await requirePostAccess(post, user._id.toString(), normalizeRole(user.role) === "admin");
+      await requirePostAccess(
+        post,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
       return Comment.find({ postId }).sort({ createdAt: 1 });
     },
 
@@ -138,7 +158,11 @@ export const postResolvers = {
       }
       if (input.type === "image") {
         if (!input.imageFileId) badUserInput("Choose an image before publishing.");
-        const file = await claimStoredFile(input.imageFileId, user._id.toString(), "post");
+        const file = await claimStoredFile(
+          input.imageFileId,
+          user._id.toString(),
+          "post"
+        );
         payload.imageUrl = file.publicUrl || `/files/${file._id.toString()}`;
         payload.imagePath = file.path;
         payload.imageFileId = file._id;
@@ -146,7 +170,9 @@ export const postResolvers = {
       }
       if (input.type === "poll") {
         const question = input.pollQuestion?.trim() ?? "";
-        const options = (input.pollOptions ?? []).map((item) => item.trim()).filter(Boolean);
+        const options = (input.pollOptions ?? [])
+          .map((item) => item.trim())
+          .filter(Boolean);
         if (!question) badUserInput("Polls need a question.");
         if (options.length < 2 || options.length > 4) {
           badUserInput("Polls need 2 to 4 options.");
@@ -155,9 +181,11 @@ export const postResolvers = {
         payload.pollOptions = options.map((text) => ({ text, voteCount: 0 }));
         if (input.pollClosesAt) {
           const raw = input.pollClosesAt;
-          const closes = raw.length <= 10 ? new Date(`${raw}T23:59:59.000Z`) : new Date(raw);
+          const closes =
+            raw.length <= 10 ? new Date(`${raw}T23:59:59.000Z`) : new Date(raw);
           if (Number.isNaN(closes.getTime())) badUserInput("Poll close date is invalid.");
-          if (closes.getTime() <= Date.now()) badUserInput("Poll close date must be in the future.");
+          if (closes.getTime() <= Date.now())
+            badUserInput("Poll close date must be in the future.");
           payload.pollClosesAt = closes;
         }
       }
@@ -177,7 +205,10 @@ export const postResolvers = {
       assertValidObjectId(id, "Post ID", mongoose);
       const post = await Post.findById(id);
       if (!post) notFound("Post not found.");
-      if (post.authorId.toString() !== user._id.toString() && normalizeRole(user.role) !== "admin") {
+      if (
+        post.authorId.toString() !== user._id.toString() &&
+        normalizeRole(user.role) !== "admin"
+      ) {
         forbidden("You can only edit your own posts.");
       }
       const next = body?.trim();
@@ -212,12 +243,20 @@ export const postResolvers = {
       return true;
     },
 
-    toggleLike: async (_: unknown, { postId }: { postId: string }, context: MyContext) => {
+    toggleLike: async (
+      _: unknown,
+      { postId }: { postId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(postId, "Post ID", mongoose);
       const post = await Post.findById(postId);
       if (!post) notFound("Post not found.");
-      await requirePostAccess(post, user._id.toString(), normalizeRole(user.role) === "admin");
+      await requirePostAccess(
+        post,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
       const existing = await PostLike.findOne({ postId, userId: user._id });
       try {
         if (existing) {
@@ -245,7 +284,11 @@ export const postResolvers = {
       if (!text) badUserInput("Comment cannot be empty.");
       const post = await Post.findById(postId);
       if (!post) notFound("Post not found.");
-      await requirePostAccess(post, user._id.toString(), normalizeRole(user.role) === "admin");
+      await requirePostAccess(
+        post,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
       if (parentId) {
         assertValidObjectId(parentId, "Parent comment ID", mongoose);
         const parent = await Comment.findById(parentId);
@@ -285,7 +328,11 @@ export const postResolvers = {
       return true;
     },
 
-    toggleSavePost: async (_: unknown, { postId }: { postId: string }, context: MyContext) => {
+    toggleSavePost: async (
+      _: unknown,
+      { postId }: { postId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(postId, "Post ID", mongoose);
       const post = await Post.findById(postId);
@@ -301,7 +348,11 @@ export const postResolvers = {
 
     reportContent: async (
       _: unknown,
-      { targetType, targetId, reason }: { targetType: string; targetId: string; reason: string },
+      {
+        targetType,
+        targetId,
+        reason,
+      }: { targetType: string; targetId: string; reason: string },
       context: MyContext
     ) => {
       const { user } = requireAuth(context);
@@ -310,7 +361,8 @@ export const postResolvers = {
       }
       assertValidObjectId(targetId, "Target ID", mongoose);
       const text = reason?.trim();
-      if (!text || text.length < 8) badUserInput("Explain why you are reporting this (8+ characters).");
+      if (!text || text.length < 8)
+        badUserInput("Explain why you are reporting this (8+ characters).");
       if (targetType === "post") {
         const post = await Post.findById(targetId);
         if (!post) notFound("Post not found.");
@@ -348,7 +400,11 @@ export const postResolvers = {
       if (optionIndex < 0 || optionIndex >= post.pollOptions.length) {
         badUserInput("Choose a valid poll option.");
       }
-      await requirePostAccess(post, user._id.toString(), normalizeRole(user.role) === "admin");
+      await requirePostAccess(
+        post,
+        user._id.toString(),
+        normalizeRole(user.role) === "admin"
+      );
       const existing = await PollVote.findOne({ postId, userId: user._id });
       if (existing) badUserInput("You already voted in this poll.");
       try {
@@ -372,15 +428,22 @@ export const postResolvers = {
       parent.communityId ? Community.findById(parent.communityId) : null,
     likedByMe: async (parent: IPost, _: unknown, context: MyContext) => {
       if (!context.user) return false;
-      return Boolean(await PostLike.findOne({ postId: parent._id, userId: context.user._id }));
+      return Boolean(
+        await PostLike.findOne({ postId: parent._id, userId: context.user._id })
+      );
     },
     savedByMe: async (parent: IPost, _: unknown, context: MyContext) => {
       if (!context.user) return false;
-      return Boolean(await SavedPost.findOne({ postId: parent._id, userId: context.user._id }));
+      return Boolean(
+        await SavedPost.findOne({ postId: parent._id, userId: context.user._id })
+      );
     },
     myPollVote: async (parent: IPost, _: unknown, context: MyContext) => {
       if (!context.user || parent.type !== "poll") return null;
-      const vote = await PollVote.findOne({ postId: parent._id, userId: context.user._id });
+      const vote = await PollVote.findOne({
+        postId: parent._id,
+        userId: context.user._id,
+      });
       return vote?.optionIndex ?? null;
     },
     pollClosed: (parent: IPost) => pollClosed(parent),

@@ -8,7 +8,12 @@ import {
   requireAuth,
   validatePasswordStrength,
 } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { claimStoredFile } from "../utils/storage.js";
 
 interface CreateUserInput {
@@ -148,12 +153,17 @@ export const userResolvers = {
 
       for (const key of assignable) {
         if (input[key] !== undefined) {
-          updates[key] = typeof input[key] === "string" ? String(input[key]).trim() : input[key];
+          updates[key] =
+            typeof input[key] === "string" ? String(input[key]).trim() : input[key];
         }
       }
 
       if (input.avatarFileId) {
-        const file = await claimStoredFile(input.avatarFileId, user._id.toString(), "avatar");
+        const file = await claimStoredFile(
+          input.avatarFileId,
+          user._id.toString(),
+          "avatar"
+        );
         updates.avatarUrl = file.publicUrl || `/files/${file._id.toString()}`;
         updates.avatarPath = file.path;
       }

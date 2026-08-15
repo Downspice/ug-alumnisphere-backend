@@ -25,4 +25,7 @@ const ConversationSchema = new Schema<IConversation>(
 ConversationSchema.index({ participantIds: 1, lastMessageAt: -1 });
 
 export const conversationPairKey = connectionPairKey;
-export const Conversation = mongoose.model<IConversation>("Conversation", ConversationSchema);
+export const Conversation = mongoose.model<IConversation>(
+  "Conversation",
+  ConversationSchema
+);

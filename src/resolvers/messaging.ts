@@ -5,7 +5,13 @@ import { Conversation, IConversation } from "../models/Conversation.js";
 import { Message, IMessage } from "../models/Message.js";
 import type { MyContext } from "../types/context.js";
 import { requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 function unreadFor(conversation: IConversation, userId: string): number {
   return conversation.unread?.get(userId) ?? 0;

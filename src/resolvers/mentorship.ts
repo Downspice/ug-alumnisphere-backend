@@ -1,10 +1,20 @@
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
-import { MentorshipRequest, IMentorshipRequest, mentorshipPairKey } from "../models/MentorshipRequest.js";
+import {
+  MentorshipRequest,
+  IMentorshipRequest,
+  mentorshipPairKey,
+} from "../models/MentorshipRequest.js";
 import { Mentorship, IMentorship } from "../models/Mentorship.js";
 import type { MyContext } from "../types/context.js";
 import { requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, forbidden, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  forbidden,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 import { notify } from "../utils/notify.js";
 
 function escapeRegex(value: string) {
@@ -20,7 +30,11 @@ export const mentorshipResolvers = {
   Query: {
     mentors: async (
       _: unknown,
-      { search, industry, location }: { search?: string; industry?: string; location?: string },
+      {
+        search,
+        industry,
+        location,
+      }: { search?: string; industry?: string; location?: string },
       context: MyContext
     ) => {
       requireAuth(context);
@@ -33,8 +47,10 @@ export const mentorshipResolvers = {
         const term = new RegExp(escapeRegex(search.trim()), "i");
         filter.$or = [{ name: term }, { headline: term }, { programme: term }];
       }
-      if (industry?.trim()) filter.industry = new RegExp(escapeRegex(industry.trim()), "i");
-      if (location?.trim()) filter.location = new RegExp(escapeRegex(location.trim()), "i");
+      if (industry?.trim())
+        filter.industry = new RegExp(escapeRegex(industry.trim()), "i");
+      if (location?.trim())
+        filter.location = new RegExp(escapeRegex(location.trim()), "i");
       try {
         return await User.find(filter).sort({ updatedAt: -1 }).limit(40);
       } catch (error) {
@@ -42,7 +58,11 @@ export const mentorshipResolvers = {
       }
     },
 
-    mentorshipRequestStatus: async (_: unknown, { userId }: { userId: string }, context: MyContext) => {
+    mentorshipRequestStatus: async (
+      _: unknown,
+      { userId }: { userId: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(userId, "User ID", mongoose);
       const pairKey = mentorshipPairKey(user._id.toString(), userId);
@@ -51,7 +71,9 @@ export const mentorshipResolvers = {
 
     incomingMentorshipRequests: async (_: unknown, __: unknown, context: MyContext) => {
       const { user } = requireAuth(context);
-      return MentorshipRequest.find({ mentorId: user._id, status: "pending" }).sort({ createdAt: -1 });
+      return MentorshipRequest.find({ mentorId: user._id, status: "pending" }).sort({
+        createdAt: -1,
+      });
     },
 
     sentMentorshipRequests: async (_: unknown, __: unknown, context: MyContext) => {
@@ -81,7 +103,8 @@ export const mentorshipResolvers = {
       assertValidObjectId(mentorId, "Mentor ID", mongoose);
       if (mentorId === user._id.toString()) badUserInput("You cannot mentor yourself.");
       const note = message?.trim();
-      if (!note || note.length < 20) badUserInput("Explain what you need in at least 20 characters.");
+      if (!note || note.length < 20)
+        badUserInput("Explain what you need in at least 20 characters.");
       const mentor = await User.findById(mentorId);
       if (!mentor) notFound("Mentor not found.");
       if (!mentor.openToMentor) badUserInput("This person is not open to mentorship.");
@@ -113,7 +136,11 @@ export const mentorshipResolvers = {
       }
     },
 
-    acceptMentorshipRequest: async (_: unknown, { id }: { id: string }, context: MyContext) => {
+    acceptMentorshipRequest: async (
+      _: unknown,
+      { id }: { id: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(id, "Request ID", mongoose);
       const request = await MentorshipRequest.findById(id);
@@ -121,7 +148,8 @@ export const mentorshipResolvers = {
       if (request.mentorId.toString() !== user._id.toString()) {
         forbidden("Only the requested mentor can accept this.");
       }
-      if (request.status !== "pending") badUserInput("This request is no longer pending.");
+      if (request.status !== "pending")
+        badUserInput("This request is no longer pending.");
       request.status = "accepted";
       await request.save();
       const existing = await Mentorship.findOne({ pairKey: request.pairKey });
@@ -149,7 +177,11 @@ export const mentorshipResolvers = {
       }
     },
 
-    declineMentorshipRequest: async (_: unknown, { id }: { id: string }, context: MyContext) => {
+    declineMentorshipRequest: async (
+      _: unknown,
+      { id }: { id: string },
+      context: MyContext
+    ) => {
       const { user } = requireAuth(context);
       assertValidObjectId(id, "Request ID", mongoose);
       const request = await MentorshipRequest.findById(id);
@@ -157,7 +189,8 @@ export const mentorshipResolvers = {
       if (request.mentorId.toString() !== user._id.toString()) {
         forbidden("Only the requested mentor can decline this.");
       }
-      if (request.status !== "pending") badUserInput("This request is no longer pending.");
+      if (request.status !== "pending")
+        badUserInput("This request is no longer pending.");
       request.status = "declined";
       return request.save();
     },

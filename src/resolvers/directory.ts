@@ -77,9 +77,11 @@ export const directoryResolvers = {
       if (filter?.skill) {
         query.skills = new RegExp(escapeRegex(filter.skill.trim()), "i");
       }
-      if (typeof filter?.openToMentor === "boolean") query.openToMentor = filter.openToMentor;
+      if (typeof filter?.openToMentor === "boolean")
+        query.openToMentor = filter.openToMentor;
       if (typeof filter?.openToWork === "boolean") query.openToWork = filter.openToWork;
-      if (filter?.verificationStatus) query.verificationStatus = filter.verificationStatus;
+      if (filter?.verificationStatus)
+        query.verificationStatus = filter.verificationStatus;
 
       if (filter?.query?.trim()) {
         const term = escapeRegex(filter.query.trim());
@@ -138,7 +140,11 @@ export const directoryResolvers = {
   },
 
   User: {
-    email: (parent: IUser & { __selfVisible?: boolean }, _: unknown, context: MyContext) => {
+    email: (
+      parent: IUser & { __selfVisible?: boolean },
+      _: unknown,
+      context: MyContext
+    ) => {
       if (parent.__selfVisible) return parent.email;
       if (!context.user) return "";
       const isSelf = context.user._id.toString() === parent._id.toString();

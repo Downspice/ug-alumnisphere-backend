@@ -2,7 +2,12 @@ import mongoose from "mongoose";
 import { Exam, IExam } from "../models/Exam.js";
 import type { MyContext } from "../types/context.js";
 import { requireAdmin, requireAuth } from "../utils/auth.js";
-import { assertValidObjectId, badUserInput, internalError, notFound } from "../utils/errors.js";
+import {
+  assertValidObjectId,
+  badUserInput,
+  internalError,
+  notFound,
+} from "../utils/errors.js";
 
 interface CreateExamInput {
   title: string;

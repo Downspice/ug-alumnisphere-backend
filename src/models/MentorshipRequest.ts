@@ -20,7 +20,12 @@ const MentorshipRequestSchema = new Schema<IMentorshipRequest>(
     mentorId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     pairKey: { type: String, required: true },
     message: { type: String, required: true, trim: true, maxlength: 1000 },
-    status: { type: String, enum: MENTORSHIP_REQUEST_STATUSES, default: "pending", index: true },
+    status: {
+      type: String,
+      enum: MENTORSHIP_REQUEST_STATUSES,
+      default: "pending",
+      index: true,
+    },
   },
   { timestamps: true }
 );
