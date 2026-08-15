@@ -10,6 +10,7 @@ import { communityResolvers } from "./communities.js";
 import { postResolvers } from "./posts.js";
 import { jobResolvers } from "./jobs.js";
 import { mentorshipResolvers } from "./mentorship.js";
+import { eventResolvers } from "./events.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -41,6 +42,7 @@ export const resolvers = {
     ...postResolvers.Query,
     ...jobResolvers.Query,
     ...mentorshipResolvers.Query,
+    ...eventResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -54,6 +56,7 @@ export const resolvers = {
     ...postResolvers.Mutation,
     ...jobResolvers.Mutation,
     ...mentorshipResolvers.Mutation,
+    ...eventResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -76,5 +79,7 @@ export const resolvers = {
   MentorshipRequest: mentorshipResolvers.MentorshipRequest,
   Mentorship: mentorshipResolvers.Mentorship,
   MentorshipGoal: mentorshipResolvers.MentorshipGoal,
+  Event: eventResolvers.Event,
+  EventRegistration: eventResolvers.EventRegistration,
   Notification: notificationResolvers.Notification,
 };
