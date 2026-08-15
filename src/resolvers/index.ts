@@ -7,6 +7,7 @@ import { directoryResolvers } from "./directory.js";
 import { connectionResolvers } from "./connections.js";
 import { messagingResolvers } from "./messaging.js";
 import { communityResolvers } from "./communities.js";
+import { postResolvers } from "./posts.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -35,6 +36,7 @@ export const resolvers = {
     ...connectionResolvers.Query,
     ...messagingResolvers.Query,
     ...communityResolvers.Query,
+    ...postResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -45,6 +47,7 @@ export const resolvers = {
     ...connectionResolvers.Mutation,
     ...messagingResolvers.Mutation,
     ...communityResolvers.Mutation,
+    ...postResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -60,5 +63,7 @@ export const resolvers = {
   Community: communityResolvers.Community,
   CommunityMember: communityResolvers.CommunityMember,
   CommunityJoinRequest: communityResolvers.CommunityJoinRequest,
+  Post: postResolvers.Post,
+  Comment: postResolvers.Comment,
   Notification: notificationResolvers.Notification,
 };
