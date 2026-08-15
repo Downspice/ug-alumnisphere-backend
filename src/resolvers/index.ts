@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { authResolvers } from "./auth.js";
 import { userResolvers } from "./users.js";
 import { examResolvers } from "./exams.js";
+import { directoryResolvers } from "./directory.js";
 import { notificationResolvers } from "./notifications.js";
 
 export const resolvers = {
@@ -25,6 +26,7 @@ export const resolvers = {
     ...authResolvers.Query,
     ...userResolvers.Query,
     ...examResolvers.Query,
+    ...directoryResolvers.Query,
     ...notificationResolvers.Query,
   },
   Mutation: {
@@ -35,6 +37,7 @@ export const resolvers = {
   },
   User: {
     ...userResolvers.User,
+    ...directoryResolvers.User,
   },
   AuthPayload: authResolvers.AuthPayload,
   Exam: examResolvers.Exam,
