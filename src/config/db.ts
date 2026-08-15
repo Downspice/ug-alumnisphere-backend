@@ -13,6 +13,7 @@ export const connectDB = async (): Promise<void> => {
   try {
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
+      dbName: process.env.MONGODB_DB_NAME || "ug_alumnisphere_db",
     });
     isConnected = true;
     console.log(
