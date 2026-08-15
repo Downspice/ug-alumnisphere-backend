@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { authResolvers } from "./auth.js";
 import { userResolvers } from "./users.js";
 import { examResolvers } from "./exams.js";
+import { verificationResolvers } from "./verification.js";
 import { directoryResolvers } from "./directory.js";
 import { notificationResolvers } from "./notifications.js";
 
@@ -26,6 +27,7 @@ export const resolvers = {
     ...authResolvers.Query,
     ...userResolvers.Query,
     ...examResolvers.Query,
+    ...verificationResolvers.Query,
     ...directoryResolvers.Query,
     ...notificationResolvers.Query,
   },
@@ -33,6 +35,7 @@ export const resolvers = {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...examResolvers.Mutation,
+    ...verificationResolvers.Mutation,
     ...notificationResolvers.Mutation,
   },
   User: {
@@ -41,5 +44,6 @@ export const resolvers = {
   },
   AuthPayload: authResolvers.AuthPayload,
   Exam: examResolvers.Exam,
+  VerificationRequest: verificationResolvers.VerificationRequest,
   Notification: notificationResolvers.Notification,
 };
